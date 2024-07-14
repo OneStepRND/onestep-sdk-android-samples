@@ -17,9 +17,25 @@ OneStepSDK is an Android library for collecting sensor data and analyzing it to 
 
 ## Getting Started
 
-To include OneStepSDK in your project, reach out to `ziv@onestep.co` for more details and access to the SDK.
+# OneStep SDK Samples
+
+This repository contains sample applications demonstrating the use of the OneStep SDK and OneStep UIKit.
+
+## Projects
+
+- **SDKSample**: A sample application showing how to integrate and use the OneStep SDK.
+- **UiKitSample**: A sample showcasing the capabilities of the OneStep UIKit.
+
+## Setup
+
+Each directory contains a separate Android project. Open any of them in Android Studio to get started.
+
+
 
 ### Installation
+To include OneStepSDK in your project, reach out to `ziv@onestep.co` for more details and access to the SDK.
+
+
 
 ```kotlin
  OneStep.Builder(
