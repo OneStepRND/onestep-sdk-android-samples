@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.onestep.sdksample"
-        minSdk = 26 // Min SDK version required to use OneStepSDK
+        minSdk = 29 // Min SDK version required to use OneStepSDK
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -53,6 +53,7 @@ dependencies {
 
     implementation(libs.oneStep.sdk)
 
+    implementation(libs.accompanist.permissions)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

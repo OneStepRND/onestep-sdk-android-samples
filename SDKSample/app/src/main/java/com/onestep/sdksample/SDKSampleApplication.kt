@@ -6,18 +6,23 @@ import co.onestep.android.core.external.models.NotificationConfig
 import co.onestep.android.core.external.models.SdkConfiguration
 import co.onestep.android.core.external.models.UserAttributes
 import co.onestep.android.core.internal.data.syncer.WalksSyncScheduler
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 
 class SDKSampleApplication: Application() {
 
     override fun onCreate() {
         super.onCreate()
+        connect()
+    }
 
+    fun connect() {
         OneStep.Builder(
             this.applicationContext,
-            "",//<YOUR-API-KEY-HERE>,
-            "",//<YOUR-APP-ID-HERE>,
-            "",//<A-UUID-FOR CURRENT-USER-HERE>,
-            ""//<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>,
+            apiKey = <YOUR-API-KEY-HERE>,
+            appId = <YOUR-APP-ID-HERE>,
+            distinctId = <A-UUID-FOR CURRENT-USER-HERE>,
+            identityVerification = <YOUR-IDENTITY-VERIFICATION-SECRET-HERE>, // or null if in development
         )
             .setConfiguration(
                 SdkConfiguration(
