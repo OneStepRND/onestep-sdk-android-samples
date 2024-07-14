@@ -69,7 +69,7 @@ To fully utilize the OneStepSDK, especially for features that require a foregrou
 Include the services declaration within the `<application>` tag of your `AndroidManifest.xml`:
 
 ```xml
-  <service
+<service
         android:name="co.onestep.android.core.external.services.OneStepRecordingService"
         android:foregroundServiceType="health" />
 <service
