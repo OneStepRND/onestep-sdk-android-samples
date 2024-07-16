@@ -28,31 +28,7 @@ To include OneStepSDK in your project, reach out to `ziv@onestep.co` for more de
         APP_ID,
         distinctId,
         IDENTITY_VERIFICATION_SECRET,
-    )
-        .setConfiguration(
-            SdkConfiguration(
-                backgroundMonitoring = true,
-                collectPedometer = true,
-                retentionPeriodHours = retentionPeriodHours,
-                syncConfigurations = WalksSyncScheduler.SyncConfigurations.Enhanced,
-            ),
-        )
-        .setUserAttributes(
-               userAttributes = UserAttributes.Builder()
-                .withFirstName("first name")
-                .withLastName("last name")
-                .build()
-            ),
-            shouldExposeToServer = true,
-        )
-        .setAnalyticsService(MyAnalytics())
-        .setBackgroundNotificationConfig(
-            NotificationConfig(
-                title = "recording your activity",
-                icon = R.drawable.ic_recording,
-            ),
-        )
-        .build()
+).build()
 ```
 
 ### Logout
@@ -79,7 +55,7 @@ Include the services declaration within the `<application>` tag of your `Android
 
 Customize the foreground notification by adding a `NotificationConfig` object to the initilize method:
 ```
-.setBackgroundNotificationConfig(
+.setInAppNotificationConfig(
             NotificationConfig(
                 title = "Recording your activity.",
                 text = "Recording performed by SDK",
@@ -104,17 +80,8 @@ Here's how you can use the main features of the SDK:
 - **disconnect**: disconnect():
   clears all OneStep data, tokens and dependencies.
 
-- **Update User Info**: updateUserAttributes(userAttributes: UserAttributes):
-  Updates attributes related to the user.
-
-- **Background Processes**: enableBackgroundMonitoring(enable: Boolean)
-  Toggles background monitoring
-
 - **Retrieve measurements data**: getMotionMeasurements(request: TimedDataRequest? = null): List<MotionMeasurement>
   Query for Motion measurements captured by the SDK
-
-- **Retrieve aggregated background data**: aggregatedBackgroundRecordsFlow(request: AggregatedTimedDataRequest?): Flow<List<AggregatedBackgroundActivity>>
-  Retrieves a flow of aggregated background records.
 
 - **Recording Service**: getRecordingService(): SimpleRecorder:
   Provides access to the recording service for custom data recording workflows.
