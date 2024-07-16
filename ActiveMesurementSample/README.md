@@ -22,7 +22,7 @@ To include OneStepSDK in your project, reach out to `ziv@onestep.co` for more de
 ### Installation
 
 ```kotlin
- OneStep.Builder(
+OneStep.Builder(
         this.applicationContext,
         API_KEY,
         APP_ID,
