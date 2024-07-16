@@ -1,4 +1,4 @@
-package com.onestep.sdksample
+package com.onestep.onestepuikitsample
 
 import android.app.Application
 import co.onestep.android.core.external.OneStep
@@ -9,7 +9,7 @@ import co.onestep.android.core.internal.data.syncer.WalksSyncScheduler
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-class SDKSampleApplication: Application() {
+class UiKitSampleApplication: Application() {
 
     override fun onCreate() {
         super.onCreate()

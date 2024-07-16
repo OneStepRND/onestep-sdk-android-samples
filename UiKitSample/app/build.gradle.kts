@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.onestep.onestepuikitsample"
-        minSdk = 24
+        minSdk = 29
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -51,6 +51,9 @@ android {
 
 dependencies {
 
+    implementation(libs.oneStep.sdk)
+    implementation(libs.oneStep.uikit)
+    implementation(libs.accompanist.permissions)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
