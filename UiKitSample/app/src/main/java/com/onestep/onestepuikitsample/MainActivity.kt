@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
         }
 
         if (!OneStep.hasActivityRecognitionPermission()) {
-            startActivity(Per)
+            startActivity(PerW)
         }
         setContent {
             PermissionAwareScreen { onInitializeSDK() }

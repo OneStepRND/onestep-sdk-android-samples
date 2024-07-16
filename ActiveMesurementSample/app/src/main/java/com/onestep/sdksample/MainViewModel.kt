@@ -5,8 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.onestep.android.core.external.OneStep
+import co.onestep.android.core.external.models.AnalysisState
 import co.onestep.android.core.external.models.ParamName
-import co.onestep.android.core.internal.data.repository.WalkRepository
 import co.onestep.android.core.internal.recorder.OneStepRecorder
 import co.onestep.android.core.internal.recorder.UserInputMetaData
 import kotlinx.coroutines.launch
@@ -54,26 +54,26 @@ class MainViewModel: ViewModel() {
         viewModelScope.launch {
             recorder.analyserState.collect {
                 when (it) {
-                    WalkRepository.AnalysedState.Idle -> {
+                    AnalysisState.Idle -> {
                         Log.d(TAG, "AnalyserState.IDLE")
                     }
 
-                    WalkRepository.AnalysedState.Uploading -> {
+                    AnalysisState.Uploading -> {
                         Log.d(TAG, "AnalyserState.UPLOADING")
                         state.value = "Uploading"
                     }
 
-                    WalkRepository.AnalysedState.Analyzing -> {
+                    AnalysisState.Analyzing -> {
                         Log.d(TAG, "AnalyserState.ANALYZING")
                         state.value = "Analyzing"
                     }
 
-                    WalkRepository.AnalysedState.Analyzed -> {
+                    AnalysisState.Analyzed -> {
                         Log.d(TAG, "AnalyserState.ANALYZED")
                         state.value = "Analyzed"
                     }
 
-                    is WalkRepository.AnalysedState.Failed -> {
+                    is AnalysisState.Failed -> {
                         Log.d(TAG, "AnalyserState.FAILED with error: ${it.error}")
                         state.value = "Failed ${it.error.error}"
                     }
@@ -108,7 +108,7 @@ class MainViewModel: ViewModel() {
 
     private fun analyse() {
         viewModelScope.launch {
-            result.value = recorder.analyzeMotionMeasurement()?.params?.get(ParamName.WALKING_WALK_SCORE).toString()
+            result.value = recorder.analyze()?.params?.get(ParamName.WALKING_WALK_SCORE).toString()
         }
     }
 
