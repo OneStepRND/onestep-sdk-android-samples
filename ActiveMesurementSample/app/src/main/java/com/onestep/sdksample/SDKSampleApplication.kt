@@ -12,9 +12,6 @@ class SDKSampleApplication: Application() {
 
     private val TAG: String? = SDKSampleApplication::class.simpleName
 
-    val API_KEY: String = "my-3i3Ndsf7IAG0yB4iWAn-HVDmkWWStffQZ0p4Y5qo"
-    // Field from build type: debug
-    val APP_ID: String = "6ddbcc62-5ad1-4cd1-bfa7-4e79af155309"
     override fun onCreate() {
         super.onCreate()
         connect() {

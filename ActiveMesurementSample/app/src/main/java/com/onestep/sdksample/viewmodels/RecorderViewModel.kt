@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.onestep.android.core.external.OneStep
 import co.onestep.android.core.external.models.AnalyserState
+import co.onestep.android.core.external.models.AssistiveDevice
+import co.onestep.android.core.external.models.LevelOfAssistance
 import co.onestep.android.core.external.models.ParamName
 import co.onestep.android.core.external.models.RecorderState
 import co.onestep.android.core.internal.recorder.UserInputMetaData
@@ -90,10 +92,12 @@ class RecorderViewModel: ViewModel() {
         viewModelScope.launch {
             recorder.start(
                 duration = duration,
-                customMetadata = mapOf("app" to "sampleApp"),
+                customMetadata = mapOf("app" to "DemoApp", "is_demo" to true, "version" to 1.1),
                 userInputMetadata = UserInputMetaData(
                     note = "sampleApp recording",
                     tags = listOf("walkType", "demo"),
+                    assistiveDevice = AssistiveDevice.CANE,
+                    levelOfAssistance = LevelOfAssistance.MODERATE_ASSISTANCE,
                 ),
             )
         }
