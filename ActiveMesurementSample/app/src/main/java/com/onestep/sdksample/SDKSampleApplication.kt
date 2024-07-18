@@ -1,7 +1,6 @@
 package com.onestep.sdksample
 
 import android.app.Application
-import android.util.Log
 import co.onestep.android.core.external.OneStep
 import co.onestep.android.core.external.models.InitResult
 import co.onestep.android.core.external.models.NotificationConfig
@@ -14,9 +13,10 @@ class SDKSampleApplication: Application() {
 
     override fun onCreate() {
         super.onCreate()
-        connect() {
-            Log.d(TAG, "connection result $it")
-        }
+//        You can call connect on the app creation or when your logic requires it
+//        connect() {
+//            Log.d(TAG, "connection result $it")
+//        }
     }
 
     fun connect(
