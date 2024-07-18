@@ -1,23 +1,23 @@
-package com.onestep.sdksample
+package com.onestep.sdksample.viewmodels
 
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.onestep.android.core.external.OneStep
-import co.onestep.android.core.external.models.AnalysisState
+import co.onestep.android.core.external.models.AnalyserState
 import co.onestep.android.core.external.models.ParamName
-import co.onestep.android.core.internal.recorder.OneStepRecorder
+import co.onestep.android.core.external.models.RecorderState
 import co.onestep.android.core.internal.recorder.UserInputMetaData
 import kotlinx.coroutines.launch
 
-class MainViewModel: ViewModel() {
+class RecorderViewModel: ViewModel() {
 
     private val recorder by lazy {
         OneStep.getRecordingService()
     }
 
-    var state = mutableStateOf<String?>(OneStepRecorder.RecorderState.INITIALIZED.name)
+    var state = mutableStateOf<String?>(RecorderState.INITIALIZED.name)
         private set
 
     var result = mutableStateOf<String?>(null)
@@ -27,22 +27,22 @@ class MainViewModel: ViewModel() {
         viewModelScope.launch {
             recorder.recorderState.collect {
                 when (it) {
-                    OneStepRecorder.RecorderState.INITIALIZED -> {
+                    RecorderState.INITIALIZED -> {
                         Log.d(TAG, "RecorderState.INITIALIZED")
                         state.value = "Initialized"
                     }
 
-                    OneStepRecorder.RecorderState.RECORDING -> {
+                    RecorderState.RECORDING -> {
                         Log.d(TAG, "RecorderState.RECORDING")
                         state.value = "Recording"
                     }
 
-                    OneStepRecorder.RecorderState.FINALIZING -> {
+                    RecorderState.FINALIZING -> {
                         Log.d(TAG, "RecorderState.FINALIZING")
                         state.value = "Finalizing"
                     }
 
-                    OneStepRecorder.RecorderState.DONE -> {
+                    RecorderState.DONE -> {
                         Log.d(TAG, "RecorderState.DONE")
                         state.value = "Done"
                         analyse()
@@ -54,26 +54,26 @@ class MainViewModel: ViewModel() {
         viewModelScope.launch {
             recorder.analyserState.collect {
                 when (it) {
-                    AnalysisState.Idle -> {
+                    AnalyserState.Idle -> {
                         Log.d(TAG, "AnalyserState.IDLE")
                     }
 
-                    AnalysisState.Uploading -> {
+                    AnalyserState.Uploading -> {
                         Log.d(TAG, "AnalyserState.UPLOADING")
                         state.value = "Uploading"
                     }
 
-                    AnalysisState.Analyzing -> {
+                    AnalyserState.Analyzing -> {
                         Log.d(TAG, "AnalyserState.ANALYZING")
                         state.value = "Analyzing"
                     }
 
-                    AnalysisState.Analyzed -> {
+                    AnalyserState.Analyzed -> {
                         Log.d(TAG, "AnalyserState.ANALYZED")
                         state.value = "Analyzed"
                     }
 
-                    is AnalysisState.Failed -> {
+                    is AnalyserState.Failed -> {
                         Log.d(TAG, "AnalyserState.FAILED with error: ${it.error}")
                         state.value = "Failed ${it.error.error}"
                     }

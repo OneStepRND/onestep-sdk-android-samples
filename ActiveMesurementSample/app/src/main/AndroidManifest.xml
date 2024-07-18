@@ -12,7 +12,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OneStepSDKSampleApp"
         android:name=".SDKSampleApplication"
-        tools:targetApi="31">
+        tools:targetApi="31"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
             android:exported="true"
