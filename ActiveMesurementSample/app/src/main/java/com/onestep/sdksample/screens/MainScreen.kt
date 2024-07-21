@@ -42,9 +42,7 @@ fun MainScreen(viewModel: MainViewModel, connect: (MainViewModel) -> Unit) {
             }
         }
 
-        else -> {
-            WalkRecordScreen()
-        }
+        else -> WalkRecordScreen()
     }
 }
 

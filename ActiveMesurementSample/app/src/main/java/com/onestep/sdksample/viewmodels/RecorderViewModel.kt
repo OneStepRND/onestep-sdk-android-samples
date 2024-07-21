@@ -8,6 +8,7 @@ import co.onestep.android.core.external.OneStep
 import co.onestep.android.core.external.models.AnalyserState
 import co.onestep.android.core.external.models.AssistiveDevice
 import co.onestep.android.core.external.models.LevelOfAssistance
+import co.onestep.android.core.external.models.MotionMeasurement
 import co.onestep.android.core.external.models.ParamName
 import co.onestep.android.core.external.models.RecorderState
 import co.onestep.android.core.internal.recorder.UserInputMetaData
@@ -22,7 +23,7 @@ class RecorderViewModel: ViewModel() {
     var state = mutableStateOf<String?>(RecorderState.INITIALIZED.name)
         private set
 
-    var result = mutableStateOf<String?>(null)
+    var result = mutableStateOf<MotionMeasurement?>(null)
         private set
 
     init {
@@ -112,7 +113,8 @@ class RecorderViewModel: ViewModel() {
 
     private fun analyse() {
         viewModelScope.launch {
-            result.value = recorder.analyze()?.params?.get(ParamName.WALKING_WALK_SCORE).toString()
+            result.value = recorder.analyze()
+            Log.d(TAG, "result: $result")
         }
     }
 
