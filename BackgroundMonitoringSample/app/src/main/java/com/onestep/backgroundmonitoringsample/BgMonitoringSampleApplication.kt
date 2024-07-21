@@ -19,9 +19,9 @@ class BgMonitoringSampleApplication: Application() {
     ) {
         OneStep.Builder(
             this.applicationContext,
-            apiKey = "6ddbcc62-5ad1-4cd1-bfa7-4e79af155309",//<YOUR-API-KEY-HERE>",
-            appId = "my-3i3Ndsf7IAG0yB4iWAn-HVDmkWWStffQZ0p4Y5qo",//"<YOUR-APP-ID-HERE>",
-            distinctId = "ziv@bgSampleApp.com",
+            apiKey = "<YOUR-API-KEY-HERE>",
+            appId = "<YOUR-APP-ID-HERE>",
+            distinctId = "<A-UUID-FOR CURRENT-USER-HERE>",
             identityVerification = null //<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>, // Activate this in production
         )
             .setConfiguration(
