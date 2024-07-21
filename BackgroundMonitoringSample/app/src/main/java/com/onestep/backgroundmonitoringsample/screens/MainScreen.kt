@@ -1,6 +1,8 @@
 package com.onestep.backgroundmonitoringsample.screens
 
 import android.Manifest
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -15,10 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import co.onestep.android.core.external.OneStep
 import co.onestep.android.core.external.models.BackgroundMonitoringStats
-import co.onestep.android.core.external.models.InitResult
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.onestep.backgroundmonitoringsample.ui.model.ScreenState
 import com.onestep.backgroundmonitoringsample.viewmodels.MainViewModel
 import kotlinx.coroutines.launch
 
@@ -28,8 +30,7 @@ fun MainScreen(
     viewModel: MainViewModel,
     connect: () -> Unit
 ) {
-    val sdkInitialized = viewModel.sdkInitialized
-    val isConnecting = viewModel.isConnecting
+    val screenState = viewModel.screenState
     val scope = rememberCoroutineScope()
 
     // Permission for activity recognition is required to use the SDK
@@ -37,8 +38,13 @@ fun MainScreen(
         permission = Manifest.permission.ACTIVITY_RECOGNITION
     )
 
+    LaunchedEffect(activityRecognitionPermissionState.status) {
+        viewModel.setPermissionGranted(activityRecognitionPermissionState.status.isGranted)
+    }
+
     // BackgroundMonitoringStats is a data class that holds the monitoring stats
     var collectionData by remember { mutableStateOf(BackgroundMonitoringStats.empty()) }
+
 
     LaunchedEffect(Unit) {
         // Collect monitoring stats from the SDK as a Kotlin Flow
@@ -49,39 +55,45 @@ fun MainScreen(
         }
     }
 
-    when {
-        isConnecting -> {
-            Box(Modifier.fillMaxSize()) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
-            }
+    BackHandler {
+        if (screenState is ScreenState.AggregatedRecords) {
+            viewModel.setState(ScreenState.Initialized)
         }
+    }
 
-        sdkInitialized == null || sdkInitialized is InitResult.Error -> {
-            SDKnotInitialized(viewModel) {
-                connect()
+    AnimatedContent(
+        targetState = screenState, label = "screen_state"
+    ) { state ->
+        when (state) {
+            ScreenState.Loading -> {
+                Box(Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(Modifier.align(Alignment.Center))
+                }
             }
-        }
+            ScreenState.NoPermission -> NoActivityRecognitionPermission {
+                    activityRecognitionPermissionState.launchPermissionRequest()
+                }
 
-        !activityRecognitionPermissionState.status.isGranted -> {
-            NoActivityRecognitionPermission {
-                activityRecognitionPermissionState.launchPermissionRequest()
-            }
-        }
+            is ScreenState.NotInitialized -> SDKnotInitialized(viewModel) { connect() }
 
-        else -> {
-            MonitoringScreen(
-                collectionData = collectionData,
-                onConnect = connect,
-            ) {
-                scope.launch {
-                    if (OneStep.isInitialized()) {
-                        OneStep.monitoringStatsFlow().collect {
-                            collectionData = it
+            ScreenState.Initialized -> {
+                MonitoringScreen(
+                    collectionData = collectionData,
+                    onShowRecords = {
+                        viewModel.showRecords(it)
+                    },
+                ) {
+                    scope.launch {
+                        if (OneStep.isInitialized()) {
+                            OneStep.monitoringStatsFlow().collect {
+                                collectionData = it
+                            }
                         }
                     }
                 }
             }
+
+            is ScreenState.AggregatedRecords -> AggregateRecordsListScreen(aggregateType = state.aggregateType)
         }
     }
 }
-

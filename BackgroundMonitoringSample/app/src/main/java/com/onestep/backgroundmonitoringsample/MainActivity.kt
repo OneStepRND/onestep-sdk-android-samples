@@ -24,12 +24,9 @@ import androidx.compose.ui.unit.sp
 import co.onestep.android.core.external.OneStep
 import co.onestep.android.core.external.models.BackgroundMonitoringStats
 import co.onestep.android.core.external.models.InitResult
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import com.onestep.backgroundmonitoringsample.screens.MainScreen
+import com.onestep.backgroundmonitoringsample.ui.model.ScreenState
 import com.onestep.backgroundmonitoringsample.viewmodels.MainViewModel
-import kotlinx.coroutines.flow.Flow
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -44,19 +41,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
     private fun connect() {
-        viewModel.isConnecting = true
+        viewModel.setState(ScreenState.Loading)
         (application as BgMonitoringSampleApplication).connect { result ->
-            viewModel.sdkInitialized = when (result) {
+            when (result) {
                 is InitResult.Success -> {
-                    viewModel.isConnecting = false
-                    result
+                    viewModel.setState(ScreenState.Initialized)
                 }
 
                 is InitResult.Error -> {
-                    viewModel.isConnecting = false
-                    result
+                    viewModel.setState(ScreenState.NotInitialized(result.message))
                 }
             }
         }

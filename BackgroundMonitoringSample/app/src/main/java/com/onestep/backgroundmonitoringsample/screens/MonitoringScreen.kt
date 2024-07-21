@@ -1,7 +1,10 @@
 package com.onestep.backgroundmonitoringsample.screens
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,9 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.onestep.android.core.external.OneStep
 import co.onestep.android.core.external.models.BackgroundMonitoringStats
-import com.onestep.backgroundmonitoringsample.components.CollectionDataValue
-import com.onestep.backgroundmonitoringsample.components.PermissionTestButton
 import com.onestep.backgroundmonitoringsample.components.SafeSDKButton
+import com.onestep.backgroundmonitoringsample.ui.model.AggregateType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -39,11 +41,10 @@ const val TAG = "SDKDevScreen"
 @Composable
 fun MonitoringScreen(
     collectionData: BackgroundMonitoringStats,
-    onConnect: () -> Unit,
+    onShowRecords: (AggregateType) -> Unit,
     refreshCollectionData: () -> Unit,
 ) {
     val context = LocalContext.current
-    var connectionButtonText by remember { mutableStateOf(if (OneStep.isInitialized()) "DISCONNECT SDK" else "CONNECT SDK") }
     var recordingButtonText by remember { mutableStateOf(if (OneStep.isBackgroundMonitoringActive() ) "Stop bg recording" else "Start bg recording") }
     Column(
         modifier = Modifier
@@ -54,19 +55,15 @@ fun MonitoringScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
         HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
-        ScreenTitle(Modifier.align(CenterHorizontally), "Background Monitoring")
-        Spacer(modifier = Modifier.height(8.dp))
-        PermissionTestButton()
-        SafeSDKButton(action = { OneStep.testBackgroundRecording() }) {
-            Text("Trigger a background recording")
-        }
-        SafeSDKButton(action = {
+        ScreenTitle(Modifier.align(CenterHorizontally), "Background Monitoring ${if (collectionData.activated) "On" else "Off"}")
+        Spacer(modifier = Modifier.height(16.dp))
+        SafeSDKButton(modifier = Modifier.align(CenterHorizontally), action = {
             if (!OneStep.hasActivityRecognitionPermission()) {
                 Toast.makeText(context, "No permissions granted", Toast.LENGTH_SHORT).show()
                 return@SafeSDKButton
             }
             recordingButtonText =
-                if (!OneStep.isBackgroundMonitoringActive()) "Stop bg recording" else "Start bg recording"
+                if (!OneStep.isBackgroundMonitoringActive()) "DEACTIVATE" else "ACTIVATE"
             if (OneStep.isBackgroundMonitoringActive()) {
                 OneStep.unregisterBackgroundMonitoring()
             } else {
@@ -76,37 +73,46 @@ fun MonitoringScreen(
         }) {
             Text(recordingButtonText)
         }
-        CollectionDataValue("Background monitoring: ${if (collectionData.bgMonitoringActivated) "enabled" else "disabled"}")
-        HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
-        ScreenTitle(Modifier.align(CenterHorizontally), text = "Data & Sync")
         Spacer(modifier = Modifier.height(8.dp))
+        SafeSDKButton(modifier = Modifier.align(CenterHorizontally), action = {
+            OneStep.testBackgroundRecording()
+        }) {
+            Text("Test background recording")
+        }
+        Spacer(modifier = Modifier.height(32.dp))
+        HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
+        Spacer(modifier = Modifier.height(32.dp))
+        ScreenTitle(Modifier.align(CenterHorizontally), text = "Your daily walk score")
+        Spacer(modifier = Modifier.height(32.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+
+            Button(onClick = { onShowRecords(AggregateType.HOURLY_BG_RECORDS) }) {
+                Text(text = "Hourly")
+            }
+            Button(onClick = { onShowRecords(AggregateType.DAILY_BG_RECORDS) }) {
+                Text(text = "Daily")
+            }
+
+            Button(onClick = { onShowRecords(AggregateType.ALL_RECORDS) }) {
+                Text(text = "All")
+            }
+        }
+        Spacer(modifier = Modifier.height(32.dp))
+        ScreenTitle(text = "Updated: ${collectionData.lastResultSync.toUiDate(SimpleDateFormat("yyyy-MM-dd hh:mm a", Locale.getDefault()))}")
+        HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         SafeSDKButton(
+            modifier = Modifier.align(CenterHorizontally),
             action = {
                 Toast.makeText(context, "Syncing OneStep data", Toast.LENGTH_SHORT).show()
                 OneStep.sync()
                 refreshCollectionData()
             }) {
-            Text("Sync all recorded samples")
+            Text(
+                fontSize = 20.sp,
+                text = "Sync all recorded samples"
+            )
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = {
-            if (OneStep.isInitialized()) {
-                OneStep.disconnect()
-                connectionButtonText = "CONNECT SDK"
-            } else {
-               onConnect()
-                connectionButtonText = "DISCONNECT SDK"
-            }
-            refreshCollectionData()
-        }) {
-            Text(connectionButtonText)
-        }
-        HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
-        ScreenTitle(text = "Monitoring stats")
-        Spacer(modifier = Modifier.height(8.dp))
-        CollectionDataWidget(collectionData = collectionData)
-        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
@@ -115,30 +121,19 @@ private fun ScreenTitle(
     modifier: Modifier = Modifier,
     text: String
 ) {
-    Text(
-        text = text,
-        textAlign = TextAlign.Start,
-        fontSize = 24.sp,
-        color = MaterialTheme.colorScheme.onBackground,
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(modifier)
-    )
-}
-
-@Composable
-fun CollectionDataWidget(
-    modifier: Modifier = Modifier,
-    collectionData: BackgroundMonitoringStats,
-) {
-    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd hh:mm a", Locale.getDefault()) }
-
-    Column(modifier = modifier) {
-        CollectionDataValue("Background permissions: ${if (collectionData.bgPermissions) "granted" else "missing"}")
-        CollectionDataValue("Last BG sample recorded: ${collectionData.lastBgSampleCollected.toUiDate(dateFormat)}")
-        CollectionDataValue("Data sync: ${if (collectionData.pendingData) "pending data on device" else "up-to-date"}")
-        CollectionDataValue("Last BG upload sync: ${collectionData.lastBgUploadSync.toUiDate(dateFormat)}")
-        CollectionDataValue("Last BG result sync: ${collectionData.lastBgResultSync.toUiDate(dateFormat)}")
+    AnimatedContent(
+        targetState = text,
+        label = "",
+    ) { title ->
+        Text(
+            text = title,
+            textAlign = TextAlign.Center,
+            fontSize = 24.sp,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(modifier)
+        )
     }
 }
 
