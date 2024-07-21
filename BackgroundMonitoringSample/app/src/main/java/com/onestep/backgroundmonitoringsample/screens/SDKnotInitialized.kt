@@ -1,4 +1,4 @@
-package com.onestep.sdksample.screens
+package com.onestep.backgroundmonitoringsample.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.onestep.android.core.external.models.InitResult
-import com.onestep.sdksample.viewmodels.MainViewModel
+import com.onestep.backgroundmonitoringsample.viewmodels.MainViewModel
 import kotlinx.coroutines.launch
 
 

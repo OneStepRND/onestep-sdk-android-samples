@@ -1,4 +1,4 @@
-package com.onestep.sdksample.screens
+package com.onestep.backgroundmonitoringsample.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize

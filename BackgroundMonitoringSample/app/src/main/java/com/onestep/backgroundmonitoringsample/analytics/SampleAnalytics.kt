@@ -1,4 +1,4 @@
-package com.onestep.backgroundmonitoringsample
+package com.onestep.backgroundmonitoringsample.analytics
 
 import android.util.Log
 import co.onestep.android.core.external.services.OneStepAnalytics
