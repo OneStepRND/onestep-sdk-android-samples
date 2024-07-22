@@ -1,6 +1,7 @@
 package com.onestep.sdksample.screens
 
 import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,7 +37,7 @@ fun MainScreen(viewModel: MainViewModel, connect: (MainViewModel) -> Unit) {
             }
         }
 
-        !activityRecognitionPermissionState.status.isGranted -> {
+        !activityRecognitionPermissionState.status.isGranted && isOverAndroid29 -> {
             NoActivityRecognitionPermission {
                 activityRecognitionPermissionState.launchPermissionRequest()
             }
@@ -45,4 +46,7 @@ fun MainScreen(viewModel: MainViewModel, connect: (MainViewModel) -> Unit) {
         else -> WalkRecordScreen()
     }
 }
+
+val isOverAndroid29 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+
 

@@ -1,5 +1,7 @@
 package com.onestep.backgroundmonitoringsample.viewmodels
 
+import android.os.Build
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -17,7 +19,7 @@ class MainViewModel: ViewModel() {
 
     fun setState(state: ScreenState) {
         if (state is ScreenState.Initialized) {
-            screenState = if (permissionState) {
+            screenState = if (permissionState || isUnderAndroid29) {
                 isInitialized = true
                 ScreenState.Initialized
             } else {
@@ -30,7 +32,7 @@ class MainViewModel: ViewModel() {
 
     fun setPermissionGranted(isGranted: Boolean) {
         permissionState = isGranted
-        screenState = if (isGranted) {
+        screenState = if (isGranted || isUnderAndroid29) {
             if (isInitialized) {
                 ScreenState.Initialized
             } else {
@@ -49,3 +51,5 @@ class MainViewModel: ViewModel() {
         val TAG: String = MainViewModel::class.simpleName ?: "MainViewModel"
     }
 }
+
+val isUnderAndroid29 = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q

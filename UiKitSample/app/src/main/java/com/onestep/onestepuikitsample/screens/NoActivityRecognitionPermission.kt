@@ -17,7 +17,10 @@ import androidx.compose.ui.unit.sp
 fun NoActivityRecognitionPermission(
     onAskPermission: () -> Unit = {},
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+
         Text(
             text = "Activity Recognition Permission is not granted",
             modifier = Modifier

@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.onestep.sdksample"
-        minSdk = 29 // Min SDK version required to use OneStepSDK
+        minSdk = 26 // Min SDK version required to use OneStepSDK
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
