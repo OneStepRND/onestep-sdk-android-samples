@@ -10,6 +10,11 @@ import co.onestep.android.core.external.models.AssistiveDevice
 import co.onestep.android.core.external.models.LevelOfAssistance
 import co.onestep.android.core.external.models.MotionMeasurement
 import co.onestep.android.core.external.models.RecorderState
+import co.onestep.android.core.external.services.MotionDataService
+import co.onestep.android.core.internal.data.domain.Norm
+import co.onestep.android.core.internal.data.domain.Norms
+import co.onestep.android.core.internal.data.domain.ParameterMetadata
+import co.onestep.android.core.internal.data.domain.ParametersMetadata
 import co.onestep.android.core.internal.recorder.UserInputMetaData
 import kotlinx.coroutines.launch
 
@@ -117,15 +122,23 @@ class RecorderViewModel: ViewModel() {
         }
     }
 
+    /*
+    This is an example of how to fetch norms and metadata for the measurements parameters
+     */
     private fun getNorms() {
         viewModelScope.launch {
-            val motionDataService = OneStep.getMotionDataService()
-            val norms = motionDataService?.getAllNorms()
-            val parametersMetadata = motionDataService?.getAllParameters()
-            val normsForMeasurement = result.value?.params?.mapNotNull {
+            // Access the motion data service (instantiated lazily)
+            val motionDataService: MotionDataService? = OneStep.getMotionDataService()
+            // Fetch all norms
+            val norms: Norms? = motionDataService?.getAllNorms()
+            // Fetch all parameter metadata
+            val parametersMetadata: ParametersMetadata? = motionDataService?.getAllParametersMetadata()
+            // Get the norms for the measurement result
+            val normsForMeasurement: List<Norm>? = result.value?.params?.mapNotNull {
                 motionDataService?.getNormByName(it.key)
             }
-            val parametersForMeasurement = result.value?.params?.mapNotNull {
+            // Get the parameter metadata for the measurement result
+            val parametersForMeasurement: List<ParameterMetadata>? = result.value?.params?.mapNotNull {
                 motionDataService?.getParameterMetadata(it.key)
             }
             Log.d(TAG, "norms: $norms")
