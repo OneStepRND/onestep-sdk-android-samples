@@ -4,6 +4,7 @@ import co.onestep.android.core.external.models.AggregatedBackgroundRecord
 import co.onestep.android.core.external.models.ParamName
 import co.onestep.android.core.internal.data.domain.BackgroundRecord
 import co.onestep.android.core.internal.utils.toDateString
+import co.onestep.android.core.internal.utils.toIsoString
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -16,20 +17,12 @@ data class ActivityItem(
     val title: String,
     val startTime: String,
     val endTime: String,
-    val isSynced: Boolean = false,
     val aggregated: Boolean = false,
     val params: Map<ParamName, Float> = emptyMap(),
 ) {
-
-    val displayText: String
-        get() = when {
-            aggregated -> "Aggregated sample"
-            else -> if (isSynced) "Synced" else "Not Synced"
-        }
-
     constructor(sample: BackgroundRecord) : this(
         uuid = sample.timestamp.toString(),
-        title = sample.timestamp.toDateString(), // Assuming the timestamp is current
+        title = sample.timestamp.toDateString(dateFormat = "yyyy-MM-dd | HH:mm"), // Assuming the timestamp is current
         startTime = sample.timestamp.toDateString(),
         endTime = "Unavailable",
         params = sample.params,
@@ -58,7 +51,7 @@ fun createTitle(startTime: Long, endTime: Long): String {
             // Round to the nearest whole hour for start and end times
             val startHour = hourOnlyFormat.format(Date(startTime)).toInt() * 100
             val endHour = (hourOnlyFormat.format(Date(endTime)).toInt() + 1) * 100
-            "${startHour / 100}:00 - ${endHour / 100}:00"
+            "${Date(endTime).toIsoString()} | between ${startHour / 100}:00 - ${endHour / 100}:00 "
         }
         diffMinutes <= 1440 -> {
             // Day format for differences between 60 minutes and 24 hours

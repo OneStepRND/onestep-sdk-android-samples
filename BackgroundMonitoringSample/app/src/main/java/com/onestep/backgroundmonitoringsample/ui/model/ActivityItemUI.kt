@@ -43,13 +43,7 @@ fun ActivityItemUI(
         onClick = { expanded = !expanded },
     ) {
         Column {
-            Text(
-                text = activityItem.title,
-                modifier = Modifier
-                    .padding(8.dp),
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-            )
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -57,17 +51,13 @@ fun ActivityItemUI(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = activityItem.displayText,
+                    text = activityItem.title,
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp),
+                        .padding(8.dp),
                     color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Start,
+                    textAlign = TextAlign.Center,
                 )
-                // Show chevron icon only if walk is synced and expandable
-                if (activityItem.isSynced) {
-                    AnimatedIcon(expanded = expanded)
-                }
+                AnimatedIcon(expanded = expanded)
             }
             AnimatedVisibility(visible = expanded) {
                 Column(Modifier.padding(8.dp)) {
