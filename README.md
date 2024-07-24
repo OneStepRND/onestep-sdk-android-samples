@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 ![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)
-![Alpha Version](https://img.shields.io/badge/beta-0.6.10-red.svg)
+![Alpha Version](https://img.shields.io/badge/beta-0.8.0-red.svg)
 
 OneStepSDK is an Android library for collecting sensor data and analyzing it to produce a walk score, quantifying the nuances of walking patterns.
 
