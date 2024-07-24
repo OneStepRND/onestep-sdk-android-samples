@@ -20,10 +20,10 @@ class UiKitSampleApplication: Application() {
     ) {
         OneStep.Builder(
             this.applicationContext,
-            apiKey = "my-3i3Ndsf7IAG0yB4iWAn-HVDmkWWStffQZ0p4Y5qo",//<YOUR-API-KEY-HERE>",
-            appId = "6ddbcc62-5ad1-4cd1-bfa7-4e79af155309",//"<YOUR-APP-ID-HERE>",
-            distinctId = "ziv@bgSamplesApp.com",
-            identityVerification = null, //"<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>", // or null if in development
+            apiKey = "<YOUR-API-KEY-HERE>",
+            appId = "<YOUR-APP-ID-HERE>",
+            distinctId = "<A-UUID-FOR CURRENT-USER-HERE>",
+            identityVerification = null //<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>, // or null if in development
         )
             .setConfiguration(
                 SdkConfiguration(

@@ -44,6 +44,7 @@ class MainActivity : ComponentActivity() {
                                 RecordWalkFlowActivity.buildIntent(
                                     this,
                                     WalkRecordConfiguration.default(),
+                                    customMetadata = mapOf("app" to "sample app", "is_demo" to true, "version" to 1.1),
                                 ),
                             )
                         },
