@@ -9,7 +9,6 @@ import co.onestep.android.core.external.models.AnalyserState
 import co.onestep.android.core.external.models.AssistiveDevice
 import co.onestep.android.core.external.models.LevelOfAssistance
 import co.onestep.android.core.external.models.MotionMeasurement
-import co.onestep.android.core.external.models.ParamName
 import co.onestep.android.core.external.models.RecorderState
 import co.onestep.android.core.internal.recorder.UserInputMetaData
 import kotlinx.coroutines.launch
@@ -115,6 +114,24 @@ class RecorderViewModel: ViewModel() {
         viewModelScope.launch {
             result.value = recorder.analyze()
             Log.d(TAG, "result: $result")
+        }
+    }
+
+    private fun getNorms() {
+        viewModelScope.launch {
+            val motionDataService = OneStep.getMotionDataService()
+            val norms = motionDataService?.getAllNorms()
+            val parametersMetadata = motionDataService?.getAllParameters()
+            val normsForMeasurement = result.value?.params?.mapNotNull {
+                motionDataService?.getNormByName(it.key)
+            }
+            val parametersForMeasurement = result.value?.params?.mapNotNull {
+                motionDataService?.getParameterMetadata(it.key)
+            }
+            Log.d(TAG, "norms: $norms")
+            Log.d(TAG, "parametersMetadata: $parametersMetadata")
+            Log.d(TAG, "normsForMeasurement: $normsForMeasurement")
+            Log.d(TAG, "parametersForMeasurement: $parametersForMeasurement")
         }
     }
 

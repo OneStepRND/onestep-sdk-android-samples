@@ -16,7 +16,11 @@ import com.onestep.sdksample.viewmodels.MainViewModel
 
 @Composable
 @OptIn(ExperimentalPermissionsApi::class)
-fun MainScreen(viewModel: MainViewModel, connect: (MainViewModel) -> Unit) {
+fun MainScreen(
+    viewModel: MainViewModel,
+    connect: () -> Unit,
+    disconnect: () -> Unit
+) {
     val sdkInitialized = viewModel.sdkInitialized
     val isConnecting = viewModel.isConnecting
 
@@ -32,9 +36,7 @@ fun MainScreen(viewModel: MainViewModel, connect: (MainViewModel) -> Unit) {
         }
 
         sdkInitialized == null || sdkInitialized is InitResult.Error -> {
-            SDKnotInitialized(viewModel) {
-                connect(viewModel)
-            }
+            SDKnotInitialized(viewModel) { connect() }
         }
 
         !activityRecognitionPermissionState.status.isGranted && isOverAndroid29 -> {
@@ -43,7 +45,7 @@ fun MainScreen(viewModel: MainViewModel, connect: (MainViewModel) -> Unit) {
             }
         }
 
-        else -> WalkRecordScreen()
+        else -> WalkRecordScreen { disconnect() }
     }
 }
 

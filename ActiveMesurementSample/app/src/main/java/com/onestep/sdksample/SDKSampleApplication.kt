@@ -1,22 +1,26 @@
 package com.onestep.sdksample
 
 import android.app.Application
+import android.util.Log
 import co.onestep.android.core.external.OneStep
 import co.onestep.android.core.external.models.InitResult
 import co.onestep.android.core.external.models.NotificationConfig
 import co.onestep.android.core.external.models.SdkConfiguration
 import co.onestep.android.core.internal.data.syncer.WalksSyncScheduler
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 class SDKSampleApplication: Application() {
 
     private val TAG: String? = SDKSampleApplication::class.simpleName
 
+    val sdkConnectionState = MutableSharedFlow<InitResult>(1)
+
     override fun onCreate() {
         super.onCreate()
-//        You can call connect on the app creation or when your logic requires it
-//        connect() {
-//            Log.d(TAG, "connection result $it")
-//        }
+        connect {
+            Log.d(TAG, "connection result $it")
+            sdkConnectionState.tryEmit(it)
+        }
     }
 
     fun connect(
