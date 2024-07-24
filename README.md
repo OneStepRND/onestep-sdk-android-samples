@@ -2,7 +2,6 @@
 
 ## Versioning
 
-![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 ![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)
 ![Alpha Version](https://img.shields.io/badge/beta-0.8.0-red.svg)
 
