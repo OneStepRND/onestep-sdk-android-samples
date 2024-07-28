@@ -94,27 +94,18 @@ class RecorderViewModel: ViewModel() {
     }
 
     fun startRecording() {
-        // It's your responsibility to handle runtime permissions
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            // todo: Check for Activity Recognition permission
-            Log.d(TAG, "Activity Recognition permission granted")
-        }
-
-        // It's your responsibility to handle recorder state machine
-        if (state.value == RecorderState.RECORDING.name) {
-            Log.d(TAG, "Already recording")
-            return
-        }
+        // It's your responsibility to handle recorder state machine (i.e not calling start when already recording)
+        // It's your responsibility to check runtime permission (Activity Recognition for Android 14.0 and above)
 
         // Reset the recorder before launching a new recording session
         recorder.reset()
 
         viewModelScope.launch {
-            // technical key-value properties that will be propagate to the measurement result
-            // it supports primitive types like Boolean, Number, String
+            // Technical key-value properties that will be propagate to the measurement result.
+            // Supporting primitive types like Boolean, Number, String
             val metadata = mapOf("app" to "DemoApp", "is_demo" to true, "version" to 1.1)
 
-            // optional user tagging of the measurement including free-text note, tags,
+            // Optional user tagging of the activity including free-text note, tags,
             // and domain specific enums like assistive device and level of assistance.
             val userTagging = UserInputMetaData(
                 note = "this is a free-text note",
@@ -124,12 +115,11 @@ class RecorderViewModel: ViewModel() {
             )
 
             recorder.start(
-                // activityType is the type of activity that the user is performing
                 activityType = ActivityType.WALK,
-                // duration is the duration of the recording session in milli-seconds.
-                // the user can always stop the recording manually.
-                // if the duration is not provided, there is technical limit of 6 minutes;
-                duration = 60 * 1000,
+                // Duration is the duration of the recording session in milli-seconds.
+                // The user can always stop the recording manually.
+                // If the duration is not provided, there is a technical limit of 6 minutes;
+                duration = 60 * 1000L,
                 customMetadata = metadata,
                 userInputMetadata = userTagging,
             )

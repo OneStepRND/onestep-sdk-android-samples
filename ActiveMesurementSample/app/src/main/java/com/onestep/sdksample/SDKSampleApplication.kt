@@ -13,12 +13,14 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 
 class SDKSampleApplication: Application() {
 
+    private val TAG: String? = SDKSampleApplication::class.simpleName
+
     val sdkConnectionState = MutableSharedFlow<InitResult>(1)
 
     override fun onCreate() {
         super.onCreate()
         connect {
-            Log.d("SDKSampleApplication", "connection result $it")
+            Log.d(TAG, "connection result $it")
             sdkConnectionState.tryEmit(it)
         }
     }
@@ -28,19 +30,13 @@ class SDKSampleApplication: Application() {
     ) {
         OneStep.Builder(
             this.applicationContext,
-            apiKey = "<YOUR-API-KEY-HERE>",
-            appId = "<YOUR-APP-ID-HERE>",
-            distinctId = "<A-UUID-FOR CURRENT-USER-HERE>",
+            apiKey = "my-3i3Ndsf7IAG0yB4iWAn-HVDmkWWStffQZ0p4Y5qo",//<YOUR-API-KEY-HERE>",
+            appId = "6ddbcc62-5ad1-4cd1-bfa7-4e79af155309",//"<YOUR-APP-ID-HERE>",
+            distinctId = "shahar@demo.com",
             identityVerification = null //<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>, // Activate this in production
         )
-            .setConfiguration(
-                SdkConfiguration(
-                    // SDK will be used only for in-app recording
-                    enableMonitoringFeature = false,
-                    // use the mock IMU for testing in emulator
-                    mockIMU = false,
-                ),
-            )
+            // SDK will be used only for in-app recording
+            .setBackgroundMonitoringEnabled(false)
             // set the user profile attributes
             .setUserAttributes(
                 UserAttributes.Builder()
@@ -57,8 +53,14 @@ class SDKSampleApplication: Application() {
                     icon = R.drawable.ic_launcher_foreground,
                 ),
             )
+            .setConfiguration(
+                SdkConfiguration(
+                    mockIMU = false, // set to True when testing in emulator (mock IMU sensor data)
+                ),
+            )
             // implement the AnalyticsHandler interface to receive analytics events
             .setAnalyticsService(SampleAnalytics())
+            // register to callback to get the initialization result
             .setInitializationCallback {
                 onConnectionResult(it)
             }
