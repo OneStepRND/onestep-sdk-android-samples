@@ -48,7 +48,7 @@ fun SDKnotInitialized(
         if (viewModel.sdkInitialized is InitResult.Error) {
             val error = (viewModel.sdkInitialized as InitResult.Error).message
             Text(
-                text = "OneStep SDK is not initialized: $error",
+                text = "Initialization Error: $error",
                 modifier = Modifier
                     .padding(16.dp)
                     .align(Alignment.CenterHorizontally),
