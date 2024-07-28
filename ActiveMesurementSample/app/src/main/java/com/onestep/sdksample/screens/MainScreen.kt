@@ -39,7 +39,7 @@ fun MainScreen(
             SDKnotInitialized(viewModel) { connect() }
         }
 
-        !activityRecognitionPermissionState.status.isGranted && isOverAndroid29 -> {
+        !activityRecognitionPermissionState.status.isGranted && isOverAndroid34 -> {
             NoActivityRecognitionPermission {
                 activityRecognitionPermissionState.launchPermissionRequest()
             }
@@ -49,6 +49,6 @@ fun MainScreen(
     }
 }
 
-val isOverAndroid29 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+val isOverAndroid34 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 
 

@@ -1,10 +1,12 @@
 package com.onestep.sdksample.viewmodels
 
+import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.onestep.android.core.external.OneStep
+import co.onestep.android.core.external.models.ActivityType
 import co.onestep.android.core.external.models.AnalyserState
 import co.onestep.android.core.external.models.AssistiveDevice
 import co.onestep.android.core.external.models.LevelOfAssistance
@@ -52,6 +54,8 @@ class RecorderViewModel: ViewModel() {
                     RecorderState.DONE -> {
                         Log.d(TAG, "RecorderState.DONE")
                         state.value = "Done"
+
+                        // trigger analysis when the recording is done - it may take some time
                         analyse()
                     }
                 }
@@ -89,21 +93,45 @@ class RecorderViewModel: ViewModel() {
         }
     }
 
-    /*
-        * Start recording with a given duration in seconds
-     */
-    fun startRecording(duration: Long) {
+    fun startRecording() {
+        // It's your responsibility to handle runtime permissions
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // todo: Check for Activity Recognition permission
+            Log.d(TAG, "Activity Recognition permission granted")
+        }
+
+        // It's your responsibility to handle recorder state machine
+        if (state.value == RecorderState.RECORDING.name) {
+            Log.d(TAG, "Already recording")
+            return
+        }
+
+        // Reset the recorder before launching a new recording session
         recorder.reset()
+
         viewModelScope.launch {
+            // technical key-value properties that will be propagate to the measurement result
+            // it supports primitive types like Boolean, Number, String
+            val metadata = mapOf("app" to "DemoApp", "is_demo" to true, "version" to 1.1)
+
+            // optional user tagging of the measurement including free-text note, tags,
+            // and domain specific enums like assistive device and level of assistance.
+            val userTagging = UserInputMetaData(
+                note = "this is a free-text note",
+                tags = listOf("tag1", "tag2", "tag3"),
+                assistiveDevice = AssistiveDevice.CANE,
+                levelOfAssistance = LevelOfAssistance.INDEPENDENT,
+            )
+
             recorder.start(
-                duration = duration,
-                customMetadata = mapOf("app" to "DemoApp", "is_demo" to true, "version" to 1.1),
-                userInputMetadata = UserInputMetaData(
-                    note = "sampleApp recording",
-                    tags = listOf("walkType", "demo"),
-                    assistiveDevice = AssistiveDevice.CANE,
-                    levelOfAssistance = LevelOfAssistance.MODERATE_ASSISTANCE,
-                ),
+                // activityType is the type of activity that the user is performing
+                activityType = ActivityType.WALK,
+                // duration is the duration of the recording session in milli-seconds.
+                // the user can always stop the recording manually.
+                // if the duration is not provided, there is technical limit of 6 minutes;
+                duration = 60 * 1000,
+                customMetadata = metadata,
+                userInputMetadata = userTagging,
             )
         }
     }

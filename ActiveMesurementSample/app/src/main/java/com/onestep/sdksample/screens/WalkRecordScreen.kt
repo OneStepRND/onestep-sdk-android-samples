@@ -51,7 +51,7 @@ fun WalkRecordScreen(
                     .padding(8.dp)
                     .align(CenterHorizontally),
                 onClick = {
-                    viewModel.startRecording(1 * 60 * 1000) // duration in milliseconds
+                    viewModel.startRecording() // 60 seconds recording
                 }) {
                 Text("Start Recording")
             }

@@ -12,7 +12,4 @@ class MainViewModel: ViewModel() {
 
     var isConnecting by mutableStateOf(false)
 
-    companion object {
-        val TAG: String = MainViewModel::class.simpleName ?: "MainViewModel"
-    }
 }
