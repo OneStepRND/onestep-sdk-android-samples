@@ -1,6 +1,6 @@
 package com.onestep.sdksample.viewmodels
 
-import android.os.Build
+import android.icu.util.Calendar
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -11,7 +11,11 @@ import co.onestep.android.core.external.models.AnalyserState
 import co.onestep.android.core.external.models.AssistiveDevice
 import co.onestep.android.core.external.models.LevelOfAssistance
 import co.onestep.android.core.external.models.MotionMeasurement
+import co.onestep.android.core.external.models.ParamName
 import co.onestep.android.core.external.models.RecorderState
+import co.onestep.android.core.external.models.ResultState
+import co.onestep.android.core.external.models.TimeRangeFilter
+import co.onestep.android.core.external.models.TimeRangedDataRequest
 import co.onestep.android.core.external.services.MotionDataService
 import co.onestep.android.core.internal.data.domain.Norm
 import co.onestep.android.core.internal.data.domain.Norms
@@ -93,10 +97,13 @@ class RecorderViewModel: ViewModel() {
         }
     }
 
+    /**
+     * Start recording a new session: timed walk (60 seconds).
+     *
+     * Developer responsibility: handling recorder state machine (i.e not calling `start` when already recording)
+     * Developer responsibility: checking runtime permission (Activity Recognition is required since Android 14.0)
+     */
     fun startRecording() {
-        // It's your responsibility to handle recorder state machine (i.e not calling start when already recording)
-        // It's your responsibility to check runtime permission (Activity Recognition for Android 14.0 and above)
-
         // Reset the recorder before launching a new recording session
         recorder.reset()
 
@@ -163,6 +170,33 @@ class RecorderViewModel: ViewModel() {
             Log.d(TAG, "parametersMetadata: $parametersMetadata")
             Log.d(TAG, "normsForMeasurement: $normsForMeasurement")
             Log.d(TAG, "parametersForMeasurement: $parametersForMeasurement")
+        }
+    }
+
+    private fun weeklyAverageWalkScore() {
+        // read measurements
+        viewModelScope.launch {
+            val startOfWeek = Calendar.getInstance().apply {
+                set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            var records = OneStep.readMotionMeasurements(
+                request = TimeRangedDataRequest(
+                    timeRangeFilter = TimeRangeFilter.after(startOfWeek),
+                )
+            )
+            // filter fully analyzed walks
+            records = records.filter { it.type == ActivityType.WALK }
+            records = records.filter { it.resultState == ResultState.FULL_ANALYSIS }
+
+            // access parameters and do logic
+            val walkScores = records.mapNotNull { it.params[ParamName.WALKING_WALK_SCORE] }
+            val averageWalkScore = walkScores.average()
+            Log.d(TAG, "average walk score during calendar week: $averageWalkScore")
+            Log.d(TAG, "calculated over ${walkScores.size} walks")
         }
     }
 
