@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,12 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.onestep.android.uikit.OSTTheme
 import co.onestep.android.uikit.R
-import co.onestep.android.uikit.features.recordFlow.configurations.OSTRecordingConfiguration
-import co.onestep.android.uikit.ui.theme.OSTThemeDefaults
+import co.onestep.android.uikit.ui.theme.OSTThemeManager
 import co.onestep.android.uikit.ui.theme.bad
+import co.onestep.android.uikit.ui.theme.goodBackground
 import co.onestep.android.uikit.ui.theme.gray300
 import co.onestep.android.uikit.ui.theme.med
-import co.onestep.android.uikit.ui.theme.primary
 import co.onestep.android.uikit.ui.theme.secondary
 import com.onestep.onestepuikitsample.MainViewModel
 import com.onestep.onestepuikitsample.ui.componenets.ColorsDropDown
@@ -41,7 +41,6 @@ import com.onestep.onestepuikitsample.ui.theme.font.FunnyToysFontFamily
 import com.onestep.onestepuikitsample.ui.theme.font.NoirFontFamily
 import com.onestep.onestepuikitsample.ui.theme.font.ParadiseFontFamily
 import com.onestep.onestepuikitsample.ui.theme.font.VintageBrushFontFamily
-import com.onestep.onestepuikitsample.utils.sixMinutesTest
 
 @Composable
 fun MainScreen(
@@ -52,6 +51,9 @@ fun MainScreen(
     onStartCareLogActivity: () -> Unit,
     viewModel: MainViewModel
 ) {
+    val primary = OSTTheme.colorScheme.collectAsState().value.primary
+    val secondary = OSTTheme.colorScheme.collectAsState().value.secondary
+
     Column(modifier.padding(32.dp)) {
         Text(
             modifier = Modifier.fillMaxWidth(),
@@ -102,16 +104,17 @@ fun MainScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
         ColorsDropDown(
-            color = viewModel.colors.value.primary,
+            color = primary,
             font = viewModel.currentFont.value,
             expanded = viewModel.colorsDropdownExpanded,
-            listOf(primary, secondary, med, bad, gray300),
+            listOf(goodBackground, secondary, med, bad, gray300),
         ) { selectedColor ->
-            viewModel.colors.value = OSTThemeDefaults.colors(primary = selectedColor)
 
             /// To change primary color of the theme, use the following code
-            OSTTheme.colorScheme = OSTThemeDefaults.colors(
-                primary = selectedColor,
+            OSTThemeManager.updateColorScheme(
+                OSTTheme.colorScheme.value.copy(
+                    primary = selectedColor,
+                )
                 // YOU CAN ALSO CHANGE THE SECONDARY COLOR HERE
                 // secondary = selectedColor,
             )
@@ -152,12 +155,12 @@ private fun MainButton(
             Icon(
                 painter = painterResource(icon),
                 contentDescription = text,
-                tint = OSTTheme.colorScheme.secondary
+                tint = secondary
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = text,
-                color = OSTTheme.colorScheme.secondary,
+                color = secondary,
             )
         }
     }

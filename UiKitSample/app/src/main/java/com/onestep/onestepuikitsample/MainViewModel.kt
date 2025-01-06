@@ -15,6 +15,5 @@ class MainViewModel: ViewModel() {
 
     var colorsDropdownExpanded = mutableStateOf(false)
     var fontsDropdownExpanded = mutableStateOf(false)
-    var colors = mutableStateOf(OSTTheme.colorScheme)
     var currentFont = mutableStateOf(OSTTheme.font)
 }

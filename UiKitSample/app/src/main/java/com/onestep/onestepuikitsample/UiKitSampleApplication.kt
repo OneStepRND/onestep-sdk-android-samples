@@ -8,7 +8,7 @@ import co.onestep.android.core.external.models.sdkOut.OSTInitResult
 import co.onestep.android.core.external.models.sdkOut.OSTSdkConfiguration
 import co.onestep.android.core.external.models.sdkOut.OSTUserAttributes
 import co.onestep.android.uikit.OSTTheme
-import co.onestep.android.uikit.ui.theme.OSTThemeDefaults
+import co.onestep.android.uikit.ui.theme.OSTThemeManager
 import co.onestep.android.uikit.ui.theme.primary
 import co.onestep.android.uikit.ui.theme.secondary
 import co.onestep.android.uikit.ui.typography.NoirFontFamily
@@ -34,9 +34,11 @@ class UiKitSampleApplication: Application() {
         }
 
         // Customize the uikit theme
-        OSTTheme.colorScheme = OSTThemeDefaults.colors(
-            primary = primary,
-            secondary = secondary,
+        OSTThemeManager.updateColorScheme(
+            OSTTheme.colorScheme.value.copy(
+                primary = primary,
+                secondary = secondary
+            )
         )
         OSTTheme.font = NoirFontFamily
     }

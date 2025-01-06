@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +37,9 @@ fun FontDropDown(
     fontFamilies: List<FontFamily>,
     onFontChange: (FontFamily) -> Unit,
 ) {
+    val primary = OSTTheme.colorScheme.collectAsState().value.primary
+    val secondary = OSTTheme.colorScheme.collectAsState().value.secondary
+
     Column(
         modifier = Modifier
             .wrapContentWidth()
@@ -44,7 +48,7 @@ fun FontDropDown(
         Button(
             shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = OSTTheme.colorScheme.primary,
+                containerColor = primary,
             ),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
             onClick = { expanded.value = true }
@@ -57,7 +61,7 @@ fun FontDropDown(
                 Icon(
                     imageVector = Icons.Default.List,
                     contentDescription = "Start Recording Flow",
-                    tint = OSTTheme.colorScheme.secondary
+                    tint = secondary
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
