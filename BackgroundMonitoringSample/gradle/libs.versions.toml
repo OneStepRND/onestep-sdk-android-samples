@@ -8,7 +8,7 @@ espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.4"
 activityCompose = "1.9.1"
 composeBom = "2024.08.00"
-oneStepSDK = "1.0.10"
+oneStepSDK = "1.1.2"
 androidxLifecycle = "2.8.4"
 accompanist = "0.34.0"
 

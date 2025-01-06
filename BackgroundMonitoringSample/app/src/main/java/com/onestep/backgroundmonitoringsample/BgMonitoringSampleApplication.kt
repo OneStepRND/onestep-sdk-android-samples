@@ -5,7 +5,7 @@ import android.util.Log
 import co.onestep.android.core.external.OneStep
 import co.onestep.android.core.external.models.sdkOut.NotificationConfig
 import co.onestep.android.core.external.models.sdkOut.OSTInitResult
-import co.onestep.android.core.internal.data.syncer.SyncConfigurations
+import co.onestep.android.core.internal.data.syncer.OSTSyncConfigurations
 import com.onestep.backgroundmonitoringsample.analytics.SampleAnalytics
 import kotlinx.coroutines.flow.MutableSharedFlow
 
@@ -38,7 +38,7 @@ class BgMonitoringSampleApplication: Application() {
             // SDK will be used for background monitoring
             .setBackgroundMonitoringEnabled(enableBackgroundMonitoring)
             // syncConfigurations is an enum value that you can set to @Enhanced @Balanced or @Efficient
-            .setSyncConfigurations(SyncConfigurations.Enhanced)
+            .setSyncConfigurations(OSTSyncConfigurations.Enhanced)
             // set the foreground notification configuration attributes for the background data collection
             .setBackgroundNotificationConfig(
                 NotificationConfig(
