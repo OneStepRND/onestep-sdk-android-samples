@@ -6,10 +6,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import co.onestep.android.core.external.OneStep
-import co.onestep.android.core.external.models.sdkOut.OSTInitResult
 import com.onestep.sdksample.screens.MainScreen
 import com.onestep.sdksample.viewmodels.MainViewModel
 import kotlinx.coroutines.launch
+import co.onestep.android.core.external.models.sdkOut.OSTInitResult
 
 class MainActivity : ComponentActivity() {
 
