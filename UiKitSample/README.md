@@ -3,7 +3,7 @@
 [![Platform](https://img.shields.io/badge/platform-Android-green.svg)](https://github.com/OneStepRND/onestep-sdk-android-samples/tree/main/UiKitSample)
 [![Languages](https://img.shields.io/badge/language-Kotlin-orange.svg)](https://github.com/OneStepRND/onestep-sdk-android-samples/tree/main/UiKitSample)
 ![Commercial License](https://img.shields.io/badge/license-Commercial-green.svg)
-![UiKit Version](https://img.shields.io/badge/version-1.1.2-blue.svg)
+![UiKit Version](https://img.shields.io/badge/version-1.2.1-blue.svg)
 
 ## Introduction
 
