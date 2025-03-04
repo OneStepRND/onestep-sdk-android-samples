@@ -19,3 +19,12 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# OneStepSDK
+-keep class co.onestep.android.core.** { *; }
+-keep interface co.onestep.android.core.** { *; }
+-keep class co.onestep.android.uikit.** { *; }
+-keep interface co.onestep.android.uikit.** { *; }
+-keepclassmembernames class * {
+    public void log*(...);
+}
