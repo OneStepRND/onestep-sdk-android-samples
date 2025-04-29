@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
                             viewModel.setState(ScreenState.Initialized)
                         }
 
-                        is OSTInitResult.Error -> viewModel.setState(ScreenState.Error(it.message))
+                        is OSTInitResult.Error -> viewModel.setState(ScreenState.Error("Did you forget to add yourA API key and App ID?"))
                     }
                 } else {
                     viewModel.setState(ScreenState.Error("Background monitoring is disabled"))
