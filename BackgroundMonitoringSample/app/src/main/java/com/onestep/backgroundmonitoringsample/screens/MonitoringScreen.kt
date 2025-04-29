@@ -23,6 +23,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.onestep.android.core.external.OneStep
+import co.onestep.android.core.external.models.OSTBackgroundRegistrationResult
 import co.onestep.android.core.external.models.sdkOut.OSTBackgroundMonitoringStats
 import com.onestep.backgroundmonitoringsample.components.SafeSDKButton
 import com.onestep.backgroundmonitoringsample.ui.model.AggregateType
@@ -44,6 +49,8 @@ fun MonitoringScreen(
     onShowRecords: (AggregateType) -> Unit,
 ) {
     val context = LocalContext.current
+
+    var regResult by remember { mutableStateOf<OSTBackgroundRegistrationResult?>(null) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -53,7 +60,18 @@ fun MonitoringScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
         HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
-        ScreenTitle(Modifier.align(CenterHorizontally), "Background Monitoring ${if (collectionData.activated) "On" else "Off"}")
+        ScreenTitle(Modifier.align(CenterHorizontally),
+            when {
+                regResult != null -> when (regResult)  {
+                    OSTBackgroundRegistrationResult.success() -> "Background monitoring started"
+                    OSTBackgroundRegistrationResult.alreadyActivated() -> "Background monitoring activated"
+                    OSTBackgroundRegistrationResult.noPermission() -> "Error: Permissions not granted"
+                    OSTBackgroundRegistrationResult.featureNotEnabled() -> "Error: Background monitoring not available"
+                    else -> "Error: Unknown error"
+                }
+                else -> "Background Monitoring ${if (collectionData.activated) "On" else "Off"}"
+            }
+        )
         Spacer(modifier = Modifier.height(16.dp))
         SafeSDKButton(
             modifier = Modifier.align(CenterHorizontally),
@@ -65,7 +83,7 @@ fun MonitoringScreen(
                 if (collectionData.activated) {
                 OneStep.unregisterBackgroundMonitoring()
             } else {
-                OneStep.registerBackgroundMonitoring()
+                regResult = OneStep.registerBackgroundMonitoring()
             }
         }) {
             Text(if (collectionData.activated) "Stop bg monitoring" else "Start bg monitoring", color = Color(0xFF4678B4),)
