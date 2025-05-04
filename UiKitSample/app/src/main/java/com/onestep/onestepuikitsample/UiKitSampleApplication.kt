@@ -10,7 +10,6 @@ import co.onestep.android.core.external.models.sdkOut.OSTUserAttributes
 import co.onestep.android.uikit.OSTTheme
 import co.onestep.android.uikit.ui.theme.OSTThemeManager
 import co.onestep.android.uikit.ui.theme.primary
-import co.onestep.android.uikit.ui.theme.secondary
 import co.onestep.android.uikit.ui.typography.NoirFontFamily
 import com.onestep.onestepuikitsample.analytics.SampleAnalytics
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -37,7 +36,6 @@ class UiKitSampleApplication: Application() {
         OSTThemeManager.updateColorScheme(
             OSTTheme.colorScheme.value.copy(
                 primary = primary,
-                secondary = secondary
             )
         )
         OSTTheme.font = NoirFontFamily

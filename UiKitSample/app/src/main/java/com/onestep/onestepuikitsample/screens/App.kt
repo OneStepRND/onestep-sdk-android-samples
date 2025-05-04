@@ -5,7 +5,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import co.onestep.android.core.external.OneStep
 import co.onestep.android.core.external.models.sdkOut.OSTInitResult
-import co.onestep.android.uikit.features.recordFlow.configurations.OSTRecordingConfiguration
 import com.onestep.onestepuikitsample.MainViewModel
 import com.onestep.onestepuikitsample.ui.componenets.Loading
 
@@ -15,7 +14,11 @@ fun App(
     viewModel: MainViewModel,
     connect: () -> Unit,
     onStartDefaultRecording: () -> Unit,
-    onStartSixMinuteWalkTest: () -> Unit,
+    onStartTugTest: () -> Unit,
+    onStartStsTest: () -> Unit,
+    onStartDualTaskTest: () -> Unit,
+    onStartRomTest: () -> Unit,
+    onStartBalanceTest: () -> Unit,
     onStartPermissionsFlow: () -> Unit,
     onStartCareLogActivity: () -> Unit,
 ) {
@@ -35,7 +38,11 @@ fun App(
         else -> MainScreen(
             modifier,
             onStartDefaultRecording,
-            onStartSixMinuteWalkTest,
+            onStartTugTest,
+            onStartStsTest,
+            onStartDualTaskTest,
+            onStartRomTest,
+            onStartBalanceTest,
             onStartPermissionsFlow,
             onStartCareLogActivity,
             viewModel
