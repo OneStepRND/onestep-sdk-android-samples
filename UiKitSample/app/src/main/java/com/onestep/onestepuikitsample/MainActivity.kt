@@ -19,15 +19,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
-import co.onestep.android.core.external.models.measurement.OSTActivityType
 import co.onestep.android.core.external.models.sdkOut.OSTInitResult
 import co.onestep.android.uikit.features.carlog.presentation.OSTCarelogActivity
 import co.onestep.android.uikit.features.permissions.OSTPermissionFlowActivity
-import co.onestep.android.uikit.features.recordFlow.configurations.OSTPreRecordingQuestionData
-import co.onestep.android.uikit.features.recordFlow.configurations.OSTPrepareDuration
 import co.onestep.android.uikit.features.recordFlow.configurations.OSTRecordingConfiguration
 import co.onestep.android.uikit.features.recordFlow.presentation.OSTRecordingFlowActivity
-import co.onestep.android.uikit.features.recordFlow.screens.instructions.OSTMeasurementInstructionsData
 import com.onestep.onestepuikitsample.screens.App
 import kotlinx.coroutines.launch
 
@@ -59,8 +55,12 @@ class MainActivity : AppCompatActivity() {
                         modifier = Modifier.padding(padding).background(color = MaterialTheme.colorScheme.surface),
                         viewModel,
                         connect = { connect() },
-                        onStartDefaultRecording = { defaultRecordingFlow() },
-                        onStartSixMinuteWalkTest = { sixMinuteWalkTestRecordingFlow() },
+                        onStartDefaultRecording = { startRecordingFlow(OSTRecordingConfiguration.defaultWalk(this)) },
+                        onStartTugTest = { startRecordingFlow(OSTRecordingConfiguration.tug(this)) },
+                        onStartStsTest = { startRecordingFlow(OSTRecordingConfiguration.sts(this)) },
+                        onStartDualTaskTest = { startRecordingFlow(OSTRecordingConfiguration.dualTaskSubtract(this, instructions = "This will be displayed in the preparation screen prior to the test, you can use this stub to read instructions to your subject")) },
+                        onStartRomTest = { startRecordingFlow(OSTRecordingConfiguration.rom(this)) },
+                        onStartBalanceTest = { startRecordingFlow(OSTRecordingConfiguration.balanceTest(this)) },
                         onStartPermissionsFlow = {
                             if (context.applicationContext.checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
                                 scope.launch {
@@ -90,59 +90,17 @@ class MainActivity : AppCompatActivity() {
      * Custom technical metadata can be passed to the flow.
      * Recording configuration can be customized as needed.
      */
-    private fun defaultRecordingFlow() {
+    private fun startRecordingFlow(config: OSTRecordingConfiguration) {
         startActivity(
             OSTRecordingFlowActivity.buildIntent(
                 this,
-                config = OSTRecordingConfiguration.default(),
+                config = config,
                 customMetadata = mapOf("app" to "uikit sample app"),
             ),
         )
     }
 
-    /**
-     * Start the OneStep UIKit Recording Flow for a 6 Minute Walk Test.
-     * This sample demonstrates the most extensive recording configuration and customization.
-     */
-    private fun sixMinuteWalkTestRecordingFlow() {
-        val config = OSTRecordingConfiguration(
-            activityType = OSTActivityType.WALK,
-            duration = 360,
-            isCountingDown = true,
-            showPhonePositionScreen = false,
-            prepareScreenDuration = OSTPrepareDuration.TEN_SECONDS,
-            playVoiceOver = true,
-            instructions = OSTMeasurementInstructionsData(
-                activityDisplayName = "6 Minute Walk Test",
-                instructions = listOf(
-                    "The object of this test is to walk as far as possible for 6 minutes",
-                    "You will walk back and forth in this hallway.",
-                    "You are permitted to slow down, to stop, and to rest as necessary",
-                ),
-                hints = listOf(
-                    "You may lean against the wall while resting",
-                ),
-                gifUrl = "https://thoracicandsleep.com.au/wp-content/uploads/2022/11/IDEA-LG-COPD-Monitoring-Model-Offers-Potential-Alternative-to-6-Minute-Walk-Test-image-1.jpg",
-            ),
-            preRecordingQuestions= listOf(
-                    OSTPreRecordingQuestionData(
-                    title = "Demo Question",
-                    tagsValues = listOf("tag1", "tag2"),
-                    isMultiSelect = false,
-                ),
-            )
-        )
-        startActivity(
-            OSTRecordingFlowActivity.buildIntent(
-                this,
-                config =config,
-                customMetadata = mapOf(
-                    "app" to "uikit sample app",
-                    "custom_activity" to "6mwt",
-                ),
-            ),
-        )
-    }
+
 
     private fun collectSDKConnectionState() {
         val uiKitSampleApplication = application as UiKitSampleApplication

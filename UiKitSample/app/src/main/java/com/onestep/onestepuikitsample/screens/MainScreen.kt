@@ -9,8 +9,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -27,14 +31,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.onestep.android.uikit.OSTTheme
-import co.onestep.android.uikit.R
 import co.onestep.android.uikit.ui.theme.OSTThemeManager
 import co.onestep.android.uikit.ui.theme.bad
 import co.onestep.android.uikit.ui.theme.goodBackground
 import co.onestep.android.uikit.ui.theme.gray300
 import co.onestep.android.uikit.ui.theme.med
-import co.onestep.android.uikit.ui.theme.secondary
 import com.onestep.onestepuikitsample.MainViewModel
+import com.onestep.onestepuikitsample.R
 import com.onestep.onestepuikitsample.ui.componenets.ColorsDropDown
 import com.onestep.onestepuikitsample.ui.componenets.FontDropDown
 import com.onestep.onestepuikitsample.ui.theme.font.FunnyToysFontFamily
@@ -46,15 +49,18 @@ import com.onestep.onestepuikitsample.ui.theme.font.VintageBrushFontFamily
 fun MainScreen(
     modifier: Modifier,
     onStartDefaultRecording: () -> Unit,
-    onStartSixMinuteWalkTest: () -> Unit,
+    onStartTugTest: () -> Unit,
+    onStartStsTest: () -> Unit,
+    onStartDualTaskTest: () -> Unit,
+    onStartRomTest: () -> Unit,
+    onStartBalanceTest: () -> Unit,
     onStartPermissionsFlow: () -> Unit,
     onStartCareLogActivity: () -> Unit,
     viewModel: MainViewModel
 ) {
     val primary = OSTTheme.colorScheme.collectAsState().value.primary
-    val secondary = OSTTheme.colorScheme.collectAsState().value.secondary
 
-    Column(modifier.padding(32.dp)) {
+    Column(modifier.padding(32.dp).verticalScroll(rememberScrollState())) {
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = "UIKit Examples",
@@ -65,29 +71,65 @@ fun MainScreen(
         )
 
         MainButton(
-            "Recording flow: default",
-            R.drawable.ic_carelog_walk
+            "Walk recording",
+            R.drawable.ic_walks,
+            primary,
         ) {
             onStartDefaultRecording()
         }
 
         MainButton(
-            "Recording flow: 6MWT",
-            R.drawable.ic_start
+            "Timed up and go",
+            R.drawable.ic_physical_activity,
+            primary
         ) {
-            onStartSixMinuteWalkTest()
+            onStartTugTest()
+        }
+
+        MainButton(
+            "Sit to stand",
+            R.drawable.ic_sts,
+            primary
+        ) {
+            onStartStsTest()
+        }
+
+        MainButton(
+            "Knee flexion test",
+            co.onestep.android.uikit.R.drawable.ic_knee_flexion,
+            primary
+        ) {
+            onStartRomTest()
+        }
+
+        MainButton(
+            "Balance test",
+            R.drawable.balance_test,
+            primary
+        ) {
+            onStartBalanceTest()
+        }
+
+        MainButton(
+            "Dual task",
+            R.drawable.ic_dual_task,
+            primary
+        ) {
+            onStartDualTaskTest()
         }
 
         MainButton(
             "Carelog",
-            R.drawable.education
+            co.onestep.android.uikit.R.drawable.ic_clock,
+            primary
         ) {
             onStartCareLogActivity()
         }
 
         MainButton(
             "Permissions flow",
-            R.drawable.ic_highlights
+            R.drawable.ic_route,
+            primary
         ) {
             onStartPermissionsFlow()
         }
@@ -107,7 +149,7 @@ fun MainScreen(
             color = primary,
             font = viewModel.currentFont.value,
             expanded = viewModel.colorsDropdownExpanded,
-            listOf(goodBackground, secondary, med, bad, gray300),
+            listOf(goodBackground, med, bad, gray300),
         ) { selectedColor ->
 
             /// To change primary color of the theme, use the following code
@@ -139,9 +181,11 @@ fun MainScreen(
 private fun MainButton(
     text: String,
     @DrawableRes icon: Int,
+    color: Color,
     action: () -> Unit
 ) {
     Button(
+        modifier = Modifier.padding(8.dp).wrapContentHeight(),
         shape = RoundedCornerShape(10.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
@@ -153,14 +197,15 @@ private fun MainButton(
             horizontalArrangement = Arrangement.Start
         ) {
             Icon(
+                modifier = Modifier.size(40.dp),
                 painter = painterResource(icon),
                 contentDescription = text,
-                tint = secondary
+                tint = color,
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = text,
-                color = secondary,
+                color = color,
             )
         }
     }

@@ -38,7 +38,6 @@ fun FontDropDown(
     onFontChange: (FontFamily) -> Unit,
 ) {
     val primary = OSTTheme.colorScheme.collectAsState().value.primary
-    val secondary = OSTTheme.colorScheme.collectAsState().value.secondary
 
     Column(
         modifier = Modifier
@@ -61,7 +60,6 @@ fun FontDropDown(
                 Icon(
                     imageVector = Icons.Default.List,
                     contentDescription = "Start Recording Flow",
-                    tint = secondary
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
