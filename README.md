@@ -3,8 +3,8 @@
 ## Versioning
 
 ![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)
-![Core Version](https://img.shields.io/badge/core-1.1.2-red.svg)
-![UiKit Version](https://img.shields.io/badge/uikit-1.1.2-blue.svg)
+![Core Version](https://img.shields.io/badge/core-1.4.1-red.svg)
+![UiKit Version](https://img.shields.io/badge/uikit-1.4.1-blue.svg)
 
 This repository contains sample Android applications demonstrating how to integrate and use the OneStep SDK for motion analysis. The apps showcase how to record motion data, analyze it, and display the results within your own application.
 
