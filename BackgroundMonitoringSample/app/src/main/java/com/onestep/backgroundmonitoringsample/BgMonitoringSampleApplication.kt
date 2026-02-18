@@ -2,56 +2,62 @@ package com.onestep.backgroundmonitoringsample
 
 import android.app.Application
 import android.util.Log
-import co.onestep.android.core.external.OneStep
-import co.onestep.android.core.external.models.sdkOut.NotificationConfig
-import co.onestep.android.core.external.models.sdkOut.OSTInitResult
-import co.onestep.android.core.internal.data.syncer.OSTSyncConfigurations
-import com.onestep.backgroundmonitoringsample.analytics.SampleAnalytics
-import kotlinx.coroutines.flow.MutableSharedFlow
+import co.onestep.android.core.OSTConfiguration
+import co.onestep.android.core.OSTIdentifyResult
+import co.onestep.android.core.OneStep
+import co.onestep.android.core.monitoring.OSTMonitoringConfig
+import co.onestep.android.core.monitoring.models.OSTDefaultNotificationConfig
+import com.onestep.backgroundmonitoringsample.analytics.EventsCollector
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
-class BgMonitoringSampleApplication: Application() {
+class BgMonitoringSampleApplication : Application() {
 
     private val TAG = BgMonitoringSampleApplication::class.simpleName
-
-    val enableBackgroundMonitoring = true
-
-    val sdkConnectionState = MutableSharedFlow<OSTInitResult>(1)
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override fun onCreate() {
         super.onCreate()
-        connect {
-           Log.d(TAG, "connection result $it")
-           sdkConnectionState.tryEmit(it)
-        }
+        initializeSdk()
     }
 
-    private fun connect(
-        onConnectionResult: (OSTInitResult) -> Unit
-    ) {
-        OneStep.Builder(
-            this.applicationContext,
-            apiKey = "<YOUR-API-KEY-HERE>",
-            appId = "<YOUR-APP-ID-HERE>",
-            distinctId = "<A-UUID-FOR CURRENT-USER-HERE>",
-            identityVerification = null //<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>, // or null if in development
+    private fun initializeSdk() {
+        // Step 1: Initialize the SDK
+        OneStep.initialize(
+            application = this,
+            clientToken = "<YOUR-API-KEY-HERE>",
+            config = OSTConfiguration(),
         )
-            // SDK will be used for background monitoring
-            .setBackgroundMonitoringEnabled(enableBackgroundMonitoring)
-            // syncConfigurations is an enum value that you can set to @Enhanced @Balanced or @Efficient
-            .setSyncConfigurations(OSTSyncConfigurations.Enhanced)
-            // set the foreground notification configuration attributes for the background data collection
-            .setBackgroundNotificationConfig(
-                NotificationConfig(
-                    title = "This is the Sample App monitoring",
-                    icon = R.drawable.ic_launcher_foreground,
-                ),
+
+        // Step 2: Identify user (suspend function)
+        applicationScope.launch {
+            val result = OneStep.identify(
+                userId = "<A-UUID-FOR CURRENT-USER-HERE>",
+                identityVerification = null, //<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>
             )
-            // implement the AnalyticsHandler interface to receive analytics events
-            .setAnalyticsService(SampleAnalytics())
-            // register to callback to get the initialization result
-            .setInitializationCallback {
-                onConnectionResult(it)
+            when (result) {
+                is OSTIdentifyResult.Success -> {
+                    Log.d(TAG, "SDK identified successfully")
+                    // Step 3: Initialize monitoring
+                    OneStep.monitoring.initialize(OSTMonitoringConfig())
+                    // Step 4: Set notification
+                    OneStep.monitoring.setCustomMonitoringNotification(
+                        OSTDefaultNotificationConfig(
+                            title = { "This is the Sample App monitoring" },
+                            text = null,
+                            icon = R.drawable.ic_launcher_foreground,
+                        )
+                    )
+                }
+                is OSTIdentifyResult.Failure -> {
+                    Log.e(TAG, "SDK identify failed: ${result.error} - ${result.message}")
+                }
             }
-            .build()
+        }
+
+        // Collect SDK events
+        EventsCollector.startCollecting(applicationScope)
     }
 }
