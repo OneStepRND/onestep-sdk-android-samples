@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import co.onestep.android.core.external.models.sdkOut.OSTInitResult
+import co.onestep.android.core.OSTState
 import com.onestep.sdksample.viewmodels.MainViewModel
 import kotlinx.coroutines.launch
 
@@ -45,8 +45,8 @@ fun SDKnotInitialized(
             Text("Initialize SDK")
         }
 
-        if (viewModel.sdkInitialized is OSTInitResult.Error) {
-            val error = (viewModel.sdkInitialized as OSTInitResult.Error).message
+        if (viewModel.sdkState is OSTState.Error) {
+            val error = (viewModel.sdkState as OSTState.Error).message
             Text(
                 text = "Initialization Error: $error",
                 modifier = Modifier

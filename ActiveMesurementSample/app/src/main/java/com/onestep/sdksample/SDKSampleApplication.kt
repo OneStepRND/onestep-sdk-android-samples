@@ -2,68 +2,60 @@ package com.onestep.sdksample
 
 import android.app.Application
 import android.util.Log
-import co.onestep.android.core.external.OneStep
-import co.onestep.android.core.external.models.sdkOut.NotificationConfig
-import co.onestep.android.core.external.models.sdkOut.OSTInitResult
-import co.onestep.android.core.external.models.sdkOut.OSTSdkConfiguration
-import co.onestep.android.core.external.models.sdkOut.OSTUserAttributes
-import co.onestep.android.core.internal.utils.ISO_FORMAT
-import co.onestep.android.core.internal.utils.toDate
-import kotlinx.coroutines.flow.MutableSharedFlow
+import co.onestep.android.core.OSTConfiguration
+import co.onestep.android.core.OneStep
+import co.onestep.android.core.OSTIdentifyResult
+import co.onestep.android.core.platform.models.OSTUserAttributes
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class SDKSampleApplication: Application() {
 
     private val TAG: String? = SDKSampleApplication::class.simpleName
-
-    val sdkConnectionState = MutableSharedFlow<OSTInitResult>(1)
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override fun onCreate() {
         super.onCreate()
-        connect {
-            Log.d(TAG, "connection result $it")
-            sdkConnectionState.tryEmit(it)
+        applicationScope.launch {
+            initializeSdk()
         }
     }
 
-    fun connect(
-        onConnectionResult: (OSTInitResult) -> Unit
-    ) {
-        OneStep.Builder(
-            this.applicationContext,
-            apiKey = "<YOUR-API-KEY-HERE>",
-            appId = "<YOUR-APP-ID-HERE>",
-            distinctId = "<A-UUID-FOR CURRENT-USER-HERE>",
-            identityVerification = null //<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>, // Activate this in production
+    suspend fun initializeSdk() {
+        OneStep.initialize(
+            application = this@SDKSampleApplication,
+            clientToken = "<YOUR-CLIENT-TOKEN>",
         )
-            // SDK will be used only for in-app recording; Completely deactivate background;
-            .setBackgroundMonitoringEnabled(false)
-            // set the user profile attributes
-            .setUserAttributes(
-                OSTUserAttributes.Builder()
-                    .withFirstName("John")
-                    .withLastName("Doe")
-                    .withSex(OSTUserAttributes.Sex.MALE)
-                    .withDateOfBirth("1977-05-25".toDate(dateFormat = ISO_FORMAT)!!)
-                    .build()
-            )
-            // customize the foreground notification for active motion recorder
-            .setInAppNotificationConfig(
-                NotificationConfig(
-                    title = "This is the Sample App recording",
-                    icon = R.drawable.ic_launcher_foreground,
-                ),
-            )
-            .setConfiguration(
-                OSTSdkConfiguration(
-                    mockIMU = false, // set to True when testing in emulator (mock IMU sensor data)
-                ),
-            )
-            // implement the AnalyticsHandler interface to receive analytics events
-            .setAnalyticsService(SampleAnalytics())
-            // register to callback to get the initialization result
-            .setInitializationCallback {
-                onConnectionResult(it)
+        val result = OneStep.identify(
+            userId = "<YOUR-USER-DISTINCT-ID>",
+        )
+
+        when (result) {
+            is OSTIdentifyResult.Success -> {
+                Log.d(TAG, "SDK identified successfully")
+
+                // Set user attributes
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                OneStep.updateUserAttributes(
+                    OSTUserAttributes.Builder()
+                        .withFirstName("John")
+                        .withLastName("Doe")
+                        .withSex(OSTUserAttributes.Sex.MALE)
+                        .withDateOfBirth(dateFormat.parse("1977-05-25")!!)
+                        .build()
+                )
+
+                // Start collecting events (replaces analytics service)
+                EventsCollector.startCollecting(applicationScope)
             }
-            .build()
+
+            is OSTIdentifyResult.Failure -> {
+                Log.e(TAG, "SDK identify failed: ${result.error} - ${result.message}")
+            }
+        }
     }
 }

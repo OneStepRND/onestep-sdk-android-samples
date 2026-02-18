@@ -4,12 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.lifecycleScope
-import co.onestep.android.core.external.OneStep
+import co.onestep.android.core.OneStep
+import co.onestep.android.core.OSTState
 import com.onestep.sdksample.screens.MainScreen
 import com.onestep.sdksample.viewmodels.MainViewModel
 import kotlinx.coroutines.launch
-import co.onestep.android.core.external.models.sdkOut.OSTInitResult
 
 class MainActivity : ComponentActivity() {
 
@@ -17,44 +18,33 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectSDKConnectionState()
+        collectSDKState()
         setContent {
+            val coroutineScope = rememberCoroutineScope()
             MainScreen(
                 viewModel,
                 connect = {
-                    connect(viewModel)
+                    coroutineScope.launch {
+                        viewModel.isConnecting = true
+                        (application as SDKSampleApplication).initializeSdk()
+                    }
                 },
                 disconnect = {
                     // equivalent to "logout"
                     // cleaning: JWT token, preferences, cached data, workers, monitoring...
-                    OneStep.disconnect()
-                    viewModel.sdkInitialized = null
+                    OneStep.logout()
+                    viewModel.sdkState = OSTState.Uninitialized
                 }
             )
         }
     }
 
-    private fun collectSDKConnectionState() {
+    private fun collectSDKState() {
         lifecycleScope.launch {
-            (application as SDKSampleApplication).sdkConnectionState.collect {
-                viewModel.sdkInitialized = it
-                viewModel.isConnecting = false
-            }
-        }
-    }
-
-
-    private fun connect(viewModel: MainViewModel) {
-        (application as SDKSampleApplication).connect { result ->
-            viewModel.sdkInitialized = when (result) {
-                is OSTInitResult.Success -> {
+            OneStep.state.collect { state ->
+                viewModel.sdkState = state
+                if (state !is OSTState.Uninitialized) {
                     viewModel.isConnecting = false
-                    result
-                }
-
-                is OSTInitResult.Error -> {
-                    viewModel.isConnecting = false
-                    result
                 }
             }
         }

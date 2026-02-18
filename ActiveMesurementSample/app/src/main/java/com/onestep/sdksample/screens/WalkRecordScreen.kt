@@ -27,9 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.BottomEnd
-import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
-import androidx.compose.ui.Alignment.Companion.TopStart
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -37,11 +35,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import co.onestep.android.core.external.models.OSTParamName
-import co.onestep.android.core.external.models.recording.OSTRecorderState
+import co.onestep.android.core.common.models.OSTParamName
+import co.onestep.android.core.common.models.recording.OSTRecorderState
+import com.onestep.sdksample.BuildConfig
 import com.onestep.sdksample.viewmodels.RecorderViewModel
 
-
+typealias SDKBuildConfig = co.onestep.android.core.BuildConfig
 @Preview(showBackground = true)
 @Composable
 fun WalkRecordScreen(
@@ -63,6 +62,7 @@ fun WalkRecordScreen(
                 .padding(top = 20.dp)
                 .align(Alignment.TopCenter)
         ) {
+            BuildVariantBanner()
             MainButton(
                 Modifier.padding(horizontal = 16.dp),
                 text = "Start Recording",
@@ -171,5 +171,27 @@ private fun MainButton(
                 color = Color(0xFF4678B4),
             )
         }
+    }
+}
+
+@Composable
+fun BuildVariantBanner(modifier: Modifier = Modifier) {
+    // Option 1 – simple: use the boolean that AGP injects
+    val appVariantLabel = if (BuildConfig.DEBUG) "DEBUG" else "RELEASE"
+    val sdkVariantLabel = if (SDKBuildConfig.DEBUG) "DEBUG" else "RELEASE"
+    // Option 2 – full string ("debug", "release", "benchmark", …)
+    // val variantLabel = BuildConfig.BUILD_TYPE.uppercase()
+
+    Column {
+        Text(
+            text = "App Build variant: $appVariantLabel",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = modifier.padding(16.dp)
+        )
+        Text(
+            text = "SDK Build variant: $sdkVariantLabel",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = modifier.padding(16.dp)
+        )
     }
 }
