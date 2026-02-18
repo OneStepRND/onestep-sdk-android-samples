@@ -5,7 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
-import co.onestep.android.core.external.models.sdkOut.OSTInitResult
+import co.onestep.android.core.OSTState
+import co.onestep.android.core.OneStep
 import com.onestep.backgroundmonitoringsample.screens.MainScreen
 import com.onestep.backgroundmonitoringsample.ui.model.ScreenState
 import com.onestep.backgroundmonitoringsample.viewmodels.MainViewModel
@@ -16,27 +17,30 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectSDKConnectionState()
+        collectSDKState()
         setContent {
             MainScreen(viewModel)
         }
     }
 
-    private fun collectSDKConnectionState() {
+    private fun collectSDKState() {
         viewModel.setState(ScreenState.Loading)
         lifecycleScope.launch {
-            (application as BgMonitoringSampleApplication).sdkConnectionState.collect {
-                if ((application as BgMonitoringSampleApplication).enableBackgroundMonitoring) {
-                    when (it) {
-                        is OSTInitResult.Success -> {
-                            viewModel.collectMonitoringStats()
-                            viewModel.setState(ScreenState.Initialized)
-                        }
-
-                        is OSTInitResult.Error -> viewModel.setState(ScreenState.Error("Did you forget to add yourA API key and App ID?"))
+            OneStep.state.collect { state ->
+                when (state) {
+                    is OSTState.Identified -> {
+                        viewModel.collectMonitoringState()
+                        viewModel.setState(ScreenState.Initialized)
                     }
-                } else {
-                    viewModel.setState(ScreenState.Error("Background monitoring is disabled"))
+                    is OSTState.Error -> {
+                        viewModel.setState(ScreenState.Error("SDK Error: ${state.message}"))
+                    }
+                    is OSTState.Ready -> {
+                        // SDK initialized but not yet identified, keep loading
+                    }
+                    is OSTState.Uninitialized -> {
+                        // Still loading
+                    }
                 }
             }
         }

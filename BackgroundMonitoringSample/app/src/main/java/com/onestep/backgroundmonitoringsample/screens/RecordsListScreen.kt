@@ -30,15 +30,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.onestep.backgroundmonitoringsample.ui.model.ActivityItemUI
-import com.onestep.backgroundmonitoringsample.ui.model.AggregateType
+import com.onestep.backgroundmonitoringsample.ui.model.ScreenType
 import com.onestep.backgroundmonitoringsample.viewmodels.RecordsListViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun AggregateRecordsListScreen(
+fun RecordsListScreen(
     modifier: Modifier = Modifier,
-    aggregateType: AggregateType,
+    screenType: ScreenType,
 ) {
 
     val viewModel: RecordsListViewModel = viewModel()
@@ -50,7 +50,7 @@ fun AggregateRecordsListScreen(
     val items = viewModel.activityItems
 
     LaunchedEffect(Unit) {
-        viewModel.refreshList(aggregateType)
+        viewModel.refreshList(screenType)
     }
 
     Box {

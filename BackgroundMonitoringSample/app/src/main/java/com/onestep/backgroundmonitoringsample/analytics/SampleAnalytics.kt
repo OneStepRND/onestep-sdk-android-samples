@@ -1,14 +1,18 @@
 package com.onestep.backgroundmonitoringsample.analytics
 
 import android.util.Log
-import co.onestep.android.core.external.services.OSTAnalytics
+import co.onestep.android.core.OneStep
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
-class SampleAnalytics : OSTAnalytics {
-    override fun onEvent(eventName: String, properties: Map<String, Any>) {
-        Log.d(TAG, "trackEvent: $eventName, $properties")
-    }
+object EventsCollector {
+    private const val TAG = "OneStepEvents"
 
-    companion object {
-        val TAG: String = SampleAnalytics::class.simpleName ?: "SampleAnalytics"
+    fun startCollecting(scope: CoroutineScope) {
+        scope.launch {
+            OneStep.events.collect { event ->
+                Log.d(TAG, "Event: ${event.name}, props: ${event.properties}")
+            }
+        }
     }
 }

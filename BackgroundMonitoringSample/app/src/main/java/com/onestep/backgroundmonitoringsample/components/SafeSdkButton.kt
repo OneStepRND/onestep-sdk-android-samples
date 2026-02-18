@@ -19,7 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import co.onestep.android.core.external.OneStep
+import co.onestep.android.core.OSTState
+import co.onestep.android.core.OneStep
 
 @Composable
 fun SafeSDKButton(
@@ -34,7 +35,7 @@ fun SafeSDKButton(
         text = { text() },
         icon = icon,
         action = {
-            if (!OneStep.isInitialized()) {
+            if (OneStep.state.value is OSTState.Uninitialized) {
                 Toast.makeText(context, "SDK not initialized", Toast.LENGTH_SHORT).show()
             } else {
                 action.invoke()
