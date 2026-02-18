@@ -1,5 +1,5 @@
 [versions]
-agp = "8.5.2"
+agp = "8.12.3"
 kotlin = "2.0.21"
 coreKtx = "1.13.1"
 junit = "4.13.2"
@@ -8,7 +8,7 @@ espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.4"
 activityCompose = "1.9.1"
 composeBom = "2024.08.00"
-oneStepSDK = "1.4.1"
+oneStepSDK = "2.0.0"
 androidxLifecycle = "2.8.4"
 accompanist = "0.34.0"
 

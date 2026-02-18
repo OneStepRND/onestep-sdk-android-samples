@@ -1,7 +1,6 @@
 package com.onestep.backgroundmonitoringsample.screens
 
 import android.Manifest
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
@@ -24,8 +23,7 @@ import com.onestep.backgroundmonitoringsample.viewmodels.MainViewModel
 @Composable
 @OptIn(ExperimentalPermissionsApi::class)
 fun MainScreen(viewModel: MainViewModel) {
-    // BackgroundMonitoringStats is a data class that holds the monitoring stats
-    val collectionData = viewModel.backgroundStats.collectAsState()// by remember { mutableStateOf(BackgroundMonitoringStats.empty()) }
+    val monitoringState = viewModel.monitoringUiState.collectAsState()
     val screenState = viewModel.screenState
 
     // Permission for activity recognition is required to use the SDK
@@ -41,14 +39,14 @@ fun MainScreen(viewModel: MainViewModel) {
     }
 
     LaunchedEffect(activityRecognitionPermissionState.permissions.first { it.permission == Manifest.permission.ACTIVITY_RECOGNITION }.status) {
-        // Register background monitoring once permissions are granted
+        // Opt in to monitoring once permissions are granted
         if (activityRecognitionPermissionState.permissions.first { it.permission == Manifest.permission.ACTIVITY_RECOGNITION }.status.isGranted) {
-            viewModel.registerForBackgroundMonitoring()
+            viewModel.optInToMonitoring()
         }
     }
 
     BackHandler {
-        if (screenState is ScreenState.AggregatedRecords) {
+        if (screenState is ScreenState.Records) {
             viewModel.setState(ScreenState.Initialized)
         }
     }
@@ -76,14 +74,16 @@ fun MainScreen(viewModel: MainViewModel) {
 
             is ScreenState.Initialized -> {
                 MonitoringScreen(
-                    collectionData = collectionData.value,
+                    monitoringState = monitoringState.value,
+                    onOptIn = { viewModel.optInToMonitoring() },
+                    onOptOut = { viewModel.optOutOfMonitoring() },
                     onShowRecords = {
                         viewModel.showRecords(it)
                     },
                 )
             }
 
-            is ScreenState.AggregatedRecords -> AggregateRecordsListScreen(aggregateType = state.aggregateType)
+            is ScreenState.Records -> RecordsListScreen(screenType = state.screenType)
         }
     }
 }
