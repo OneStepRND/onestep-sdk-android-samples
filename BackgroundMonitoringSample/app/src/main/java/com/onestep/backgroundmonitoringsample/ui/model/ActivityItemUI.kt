@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import co.onestep.android.core.external.models.OSTParamName
 
 @Composable
 fun ActivityItemUI(
@@ -61,18 +60,9 @@ fun ActivityItemUI(
             }
             AnimatedVisibility(visible = expanded) {
                 Column(Modifier.padding(8.dp)) {
-                    if (activityItem.params.getOrDefault(OSTParamName.WALKING_WALK_SCORE, 0f) == 0f) {
+                    activityItem.details.forEach { (key, value) ->
                         Text(
-                            modifier = Modifier.padding(4.dp),
-                            text = "Walk Score: unable to analyze",
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-
-                    activityItem.params.forEach {
-                        Text(
-                            text = "${it.key.columnName}: ${it.value}",
+                            text = "$key: $value",
                             modifier = Modifier.padding(4.dp),
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onSurface,
