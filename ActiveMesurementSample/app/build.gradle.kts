@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.onestep.sdksample"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.onestep.sdksample"
@@ -23,11 +23,15 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            // *** Here’s the trick ***
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -39,6 +43,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"

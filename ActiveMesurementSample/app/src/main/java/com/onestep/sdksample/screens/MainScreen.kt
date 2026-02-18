@@ -8,7 +8,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import co.onestep.android.core.external.models.sdkOut.OSTInitResult
+import co.onestep.android.core.OSTState
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -21,7 +21,7 @@ fun MainScreen(
     connect: () -> Unit,
     disconnect: () -> Unit
 ) {
-    val sdkInitialized = viewModel.sdkInitialized
+    val sdkState = viewModel.sdkState
     val isConnecting = viewModel.isConnecting
 
     val activityRecognitionPermissionState = rememberPermissionState(
@@ -35,7 +35,7 @@ fun MainScreen(
             }
         }
 
-        sdkInitialized == null || sdkInitialized is OSTInitResult.Error -> {
+        sdkState is OSTState.Uninitialized || sdkState is OSTState.Error -> {
             SDKnotInitialized(viewModel) { connect() }
         }
 
@@ -51,5 +51,3 @@ fun MainScreen(
 }
 
 val isOverAndroid34 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-
-

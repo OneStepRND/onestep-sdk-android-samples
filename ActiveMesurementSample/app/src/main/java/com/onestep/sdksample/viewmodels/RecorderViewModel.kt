@@ -4,33 +4,27 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.onestep.android.core.external.OneStep
-import co.onestep.android.core.external.models.NormPart
-import co.onestep.android.core.external.models.OSTInsights
-import co.onestep.android.core.external.models.OSTNorm
-import co.onestep.android.core.external.models.OSTParamName
-import co.onestep.android.core.external.models.OSTParameterMetadata
-import co.onestep.android.core.external.models.OSTResult
-import co.onestep.android.core.external.models.OSTUserInputMetaData
-import co.onestep.android.core.external.models.aggregate.OSTTimeRangeFilter
-import co.onestep.android.core.external.models.aggregate.TimeRangedDataRequest
-import co.onestep.android.core.external.models.measurement.OSTActivityType
-import co.onestep.android.core.external.models.measurement.OSTAssistiveDevice
-import co.onestep.android.core.external.models.measurement.OSTLevelOfAssistance
-import co.onestep.android.core.external.models.measurement.OSTMotionMeasurement
-import co.onestep.android.core.external.models.measurement.OSTResultState
-import co.onestep.android.core.external.models.recording.OSTAnalyserState
-import co.onestep.android.core.external.models.recording.OSTRecorderState
-import co.onestep.android.core.external.services.OSTMotionDataService
+import co.onestep.android.core.OneStep
+import co.onestep.android.core.common.models.OSTInsights
+import co.onestep.android.core.common.models.OSTNorm
+import co.onestep.android.core.common.models.OSTNormPart
+import co.onestep.android.core.common.models.OSTParamName
+import co.onestep.android.core.common.models.OSTParameterMetadata
+import co.onestep.android.core.common.models.OSTResult
+import co.onestep.android.core.common.models.OSTUserInputMetaData
+import co.onestep.android.core.common.models.dataQueryModels.OSTTimeRangeFilter
+import co.onestep.android.core.common.models.dataQueryModels.OSTTimeRangedDataRequest
+import co.onestep.android.core.common.models.measurement.OSTActivityType
+import co.onestep.android.core.common.models.measurement.OSTAssistiveDevice
+import co.onestep.android.core.common.models.measurement.OSTLevelOfAssistance
+import co.onestep.android.core.common.models.measurement.OSTMotionMeasurement
+import co.onestep.android.core.common.models.measurement.OSTResultState
+import co.onestep.android.core.common.models.recording.OSTAnalyserState
+import co.onestep.android.core.common.models.recording.OSTRecorderState
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class RecorderViewModel: ViewModel() {
-
-    private val recorder by lazy {
-        // Access the OneStep recording interface
-        OneStep.getRecordingService()
-    }
 
     var state = mutableStateOf<String?>(OSTRecorderState.INITIALIZED.name)
         private set
@@ -40,7 +34,7 @@ class RecorderViewModel: ViewModel() {
 
     init {
         viewModelScope.launch {
-            recorder.recorderState.collect {
+            OneStep.motionLab.recorderState.collect {
                 when (it) {
                     OSTRecorderState.INITIALIZED -> {
                         // Recorder is ready to start a new recording session
@@ -73,7 +67,7 @@ class RecorderViewModel: ViewModel() {
         }
 
         viewModelScope.launch {
-            recorder.analyserState.collect {
+            OneStep.motionLab.analyserState.collect {
                 when (it) {
                     OSTAnalyserState.Idle -> {
                         Log.d(TAG, "AnalyserState.IDLE")
@@ -102,7 +96,7 @@ class RecorderViewModel: ViewModel() {
                         // - OneStep server error: try again later (or let the SDK background worker to handle it)
                         // - Timeout: offer the user to wait more, or get notification when the result is ready
                         Log.d(TAG, "AnalyserState.FAILED with error: ${it.error}")
-                        state.value = "Failed ${it.error.error}"
+                        state.value = "Failed ${it.error}"
                     }
                 }
             }
@@ -117,7 +111,7 @@ class RecorderViewModel: ViewModel() {
      */
     fun startRecording() {
         // Reset the recorder before launching a new recording session
-        recorder.reset()
+        OneStep.motionLab.reset()
         result.value = null
         viewModelScope.launch {
             // Technical key-value properties that will be propagate to the measurement result.
@@ -133,7 +127,7 @@ class RecorderViewModel: ViewModel() {
                 levelOfAssistance = OSTLevelOfAssistance.INDEPENDENT,
             )
 
-            recorder.start(
+            OneStep.motionLab.start(
                 activityType = OSTActivityType.WALK,
                 // Duration is the duration of the recording session in milli-seconds.
                 // The user can always stop the recording manually.
@@ -147,7 +141,7 @@ class RecorderViewModel: ViewModel() {
 
     fun stopRecording() {
         viewModelScope.launch {
-            recorder.stop()
+            OneStep.motionLab.stop()
         }
     }
 
@@ -168,41 +162,46 @@ class RecorderViewModel: ViewModel() {
      */
     private fun analyse() {
         viewModelScope.launch {
-            recorder.analyze(timeout = 60 * 1000L)?.let {
-                result.value = it  // update UI with the result
+            try {
+                OneStep.motionLab.analyze(timeout = 60 * 1000L)?.let {
+                    result.value = it  // update UI with the result
 
-                // Pay attention: getting the analysis result doesn't guarantee that the analysis is successful!
-                when (it.resultState) {
-                    OSTResultState.FULL_ANALYSIS -> {
-                        Log.d(TAG, "Full analysis result is available")
-                        Log.d(TAG,
-                            "measurementId=${it.id}" +
-                                    " - steps=${it.metadata.steps}" +
-                                    " - walkScore=${it.params[OSTParamName.WALKING_WALK_SCORE] ?: "N/A"}"
-                        )
+                    // Pay attention: getting the analysis result doesn't guarantee that the analysis is successful!
+                    when (it.resultState) {
+                        OSTResultState.FULL_ANALYSIS -> {
+                            Log.d(TAG, "Full analysis result is available")
+                            Log.d(TAG,
+                                "measurementId=${it.id}" +
+                                        " - steps=${it.metadata.steps}" +
+                                        " - walkScore=${it.params[OSTParamName.WALKING_WALK_SCORE] ?: "N/A"}"
+                            )
 
-                        // Example - Build summary screen
-                        motionBusinessLogicHere(it)
+                            // Example - Build summary screen
+                            motionBusinessLogicHere(it)
 
-                        // Example - compare to the weekly average
-                        weeklyAverageWalkScore()
+                            // Example - compare to the weekly average
+                            weeklyAverageWalkScore()
+                        }
+
+                        OSTResultState.PARTIAL_ANALYSIS -> {
+                            Log.d(TAG, "Partial analysis result is available")
+                        }
+
+                        OSTResultState.EMPTY_ANALYSIS -> {
+                            Log.d(TAG, "Analysis error: ${it.error}")
+                        }
+
+                        else -> {
+                            Log.d(TAG, "Analysis result is not available")
+                        }
                     }
-
-                    OSTResultState.PARTIAL_ANALYSIS -> {
-                        Log.d(TAG, "Partial analysis result is available")
-                    }
-
-                    OSTResultState.EMPTY_ANALYSIS -> {
-                        Log.d(TAG, "Analysis error: ${it.error}")
-                    }
-
-                    else -> {
-                        Log.d(TAG, "Analysis result is not available")
-                    }
+                } ?: run {
+                    // The transaction technically failed (network error, timeout, etc..)
+                    Log.w(TAG, "Result is not available, check analyser state for more details")
+                    result.value = null
                 }
-            } ?: run {
-                // The transaction technically failed (network error, timeout, etc..)
-                Log.w(TAG, "Result is not available, check recorder.analyserState for more details")
+            } catch (e: Exception) {
+                Log.w(TAG, "Analysis failed: ${e.message}")
                 result.value = null
             }
         }
@@ -215,7 +214,7 @@ class RecorderViewModel: ViewModel() {
      * - Motion Insights from the OneStep Engine (remote)
      */
     private suspend fun motionBusinessLogicHere(measurement: OSTMotionMeasurement) {
-        OneStep.getMotionDataService().let { motionService ->
+        OneStep.insights.getMotionDataService().let { motionService ->
             // You can enrich each parameters with metadata and norms
             val focusParams = listOf(
                 OSTParamName.WALKING_VELOCITY,
@@ -265,8 +264,8 @@ class RecorderViewModel: ViewModel() {
      * This API interface is still experimental and may change in the future.
      */
     private suspend fun getNorms() {
-        // Access the motion data service (instantiated lazily)
-        val motionDataService: OSTMotionDataService = OneStep.getMotionDataService()
+        // Access the motion data service via insights
+        val motionDataService = OneStep.insights.getMotionDataService()
         // Get the norms for the measurement result
         val normsForMeasurement: List<OSTNorm>? = result.value?.params?.mapNotNull {
             motionDataService.getNormByName(it.key)
@@ -291,7 +290,7 @@ class RecorderViewModel: ViewModel() {
 
         // A list of the parts of the scale that can be used to draw " ====|====|====" " in the UI
         //                                                             Red  Green Yellow
-        val velocityScaleParts: List<NormPart>? = motionDataService.getNormByName(OSTParamName.WALKING_VELOCITY)?.parts
+        val velocityScaleParts: List<OSTNormPart>? = motionDataService.getNormByName(OSTParamName.WALKING_VELOCITY)?.parts
         Log.d(TAG, "velocityScaleParts: $velocityScaleParts")
     }
 
@@ -314,8 +313,8 @@ class RecorderViewModel: ViewModel() {
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
             }.timeInMillis
-            var records = OneStep.readMotionMeasurements(
-                request = TimeRangedDataRequest(
+            var records = OneStep.motionLab.readMotionMeasurements(
+                request = OSTTimeRangedDataRequest(
                     timeRangeFilter = OSTTimeRangeFilter.after(startOfWeek),
                 )
             )
