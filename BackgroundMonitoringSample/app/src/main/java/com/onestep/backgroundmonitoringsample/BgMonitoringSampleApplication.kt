@@ -2,7 +2,6 @@ package com.onestep.backgroundmonitoringsample
 
 import android.app.Application
 import android.util.Log
-import co.onestep.android.core.OSTConfiguration
 import co.onestep.android.core.OSTIdentifyResult
 import co.onestep.android.core.OneStep
 import co.onestep.android.core.monitoring.OSTMonitoringConfig
@@ -27,15 +26,14 @@ class BgMonitoringSampleApplication : Application() {
         // Step 1: Initialize the SDK
         OneStep.initialize(
             application = this,
-            clientToken = "<YOUR-API-KEY-HERE>",
-            config = OSTConfiguration(),
+            clientToken = "<YOUR-CLIENT-TOKEN-HERE>",
         )
 
         // Step 2: Identify user (suspend function)
         applicationScope.launch {
             val result = OneStep.identify(
                 userId = "<A-UUID-FOR CURRENT-USER-HERE>",
-                identityVerification = null, //<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>
+                identityVerification = null, //<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>ת
             )
             when (result) {
                 is OSTIdentifyResult.Success -> {
