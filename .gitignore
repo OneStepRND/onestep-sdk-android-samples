@@ -44,3 +44,7 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Local AI-tooling state (oh-my-claudecode, Claude Code projects)
+.omc/
+.claude/

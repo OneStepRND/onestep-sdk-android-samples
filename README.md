@@ -85,31 +85,3 @@ OneStep.logout()
 ```
 
 `logout()` clears credentials, stops monitoring, and reverts the SDK to `OSTState.Ready`. SDK initialization is preserved — you don't need to call `initialize()` again before the next `identify()`.
-
-## Service Integration
-
-The SDK ships its own `AndroidManifest.xml` with all required permissions (`ACTIVITY_RECOGNITION`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_HEALTH`, …) and foreground services (`RecorderForegroundService`, `AlwaysOnForegroundService`). These are auto-merged into your app's manifest at build time — **no manual `<service>` declarations are required**.
-
-### Customising the monitoring notification
-
-If your app uses background monitoring, you can customise the persistent foreground-service notification:
-
-```kotlin
-OneStep.monitoring.setCustomMonitoringNotification(
-    OSTDefaultNotificationConfig(
-        title = { "Tracking your activity" },
-        text = { "OneStep is monitoring your movement" },
-        icon = R.drawable.notification_icon,
-    )
-)
-```
-
-## pro-guard rule requirment
-In order to facilitate the SDK to connect to the OneStep servers and retreive walk analysis,  
-add the following rules to you `proguard-rules.pro` file:
-
-`-keep class co.onestep.android.core.** { *; } `
-
-## Support
-
-For support, additional information, or to report issues, contact `support@onestep.co`.
