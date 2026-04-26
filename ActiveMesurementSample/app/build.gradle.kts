@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.onestep.sdksample"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.onestep.sdksample"
@@ -44,9 +44,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
     }
     packaging {
         resources {
