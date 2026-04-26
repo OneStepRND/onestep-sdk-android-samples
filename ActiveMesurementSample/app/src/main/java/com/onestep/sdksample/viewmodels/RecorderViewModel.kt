@@ -1,102 +1,83 @@
 package com.onestep.sdksample.viewmodels
 
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.onestep.android.core.OSTActivityType
 import co.onestep.android.core.OneStep
-import co.onestep.android.core.common.models.OSTInsights
-import co.onestep.android.core.common.models.OSTNorm
-import co.onestep.android.core.common.models.OSTNormPart
-import co.onestep.android.core.common.models.OSTParamName
-import co.onestep.android.core.common.models.OSTParameterMetadata
-import co.onestep.android.core.common.models.OSTResult
-import co.onestep.android.core.common.models.OSTUserInputMetaData
-import co.onestep.android.core.common.models.dataQueryModels.OSTTimeRangeFilter
-import co.onestep.android.core.common.models.dataQueryModels.OSTTimeRangedDataRequest
-import co.onestep.android.core.common.models.measurement.OSTActivityType
-import co.onestep.android.core.common.models.measurement.OSTAssistiveDevice
-import co.onestep.android.core.common.models.measurement.OSTLevelOfAssistance
-import co.onestep.android.core.common.models.measurement.OSTMotionMeasurement
-import co.onestep.android.core.common.models.measurement.OSTResultState
-import co.onestep.android.core.common.models.recording.OSTAnalyserState
-import co.onestep.android.core.common.models.recording.OSTRecorderState
+import co.onestep.android.core.motionLab.OSTAnalyserState
+import co.onestep.android.core.motionLab.OSTAssistiveDevice
+import co.onestep.android.core.motionLab.OSTLevelOfAssistance
+import co.onestep.android.core.motionLab.OSTMotionMeasurement
+import co.onestep.android.core.motionLab.OSTRecorderState
+import co.onestep.android.core.motionLab.OSTResultState
+import co.onestep.android.core.motionLab.OSTUserInputMetaData
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.Calendar
 
-class RecorderViewModel: ViewModel() {
+/**
+ * UI state for the recording flow. Collapses the two SDK state machines
+ * (recorder + analyser) and the analysis result into a single sealed type
+ * so the screen can do one `when` over it.
+ *
+ * Lifecycle: Idle → Recording → Finalizing → Uploading → Analyzing → Analyzed | Failed
+ */
+sealed interface RecorderUiState {
+    data object Idle : RecorderUiState
+    data object Recording : RecorderUiState
+    data object Finalizing : RecorderUiState
+    data object Uploading : RecorderUiState
+    data object Analyzing : RecorderUiState
+    data class Analyzed(val measurement: OSTMotionMeasurement) : RecorderUiState
+    data class Failed(val reason: String) : RecorderUiState
+}
 
-    var state = mutableStateOf<String?>(OSTRecorderState.INITIALIZED.name)
-        private set
+class RecorderViewModel : ViewModel() {
 
-    var result = mutableStateOf<OSTMotionMeasurement?>(null)
-        private set
+    private val _state = MutableStateFlow<RecorderUiState>(RecorderUiState.Idle)
+    val state: StateFlow<RecorderUiState> = _state.asStateFlow()
 
     init {
+        // Recorder state machine: INITIALIZED → RECORDING → FINALIZING → DONE
         viewModelScope.launch {
-            OneStep.motionLab.recorderState.collect {
-                when (it) {
-                    OSTRecorderState.INITIALIZED -> {
-                        // Recorder is ready to start a new recording session
-                        Log.d(TAG, "RecorderState.INITIALIZED")
-                        state.value = it.name
-                    }
-
-                    OSTRecorderState.RECORDING -> {
-                        // Recorder is currently recording. Don't call `start` again.
-                        Log.d(TAG, "RecorderState.RECORDING")
-                        state.value = it.name
-                    }
-
-                    OSTRecorderState.FINALIZING -> {
-                        // Recorder is finalizing the recording session and preparing for analysis
-                        Log.d(TAG, "RecorderState.FINALIZING")
-                        state.value = it.name
-                    }
-
+            OneStep.motionLab.recorderState.collect { recorderState ->
+                Log.d(TAG, "RecorderState: $recorderState")
+                when (recorderState) {
+                    OSTRecorderState.INITIALIZED -> _state.value = RecorderUiState.Idle
+                    OSTRecorderState.RECORDING -> _state.value = RecorderUiState.Recording
+                    OSTRecorderState.FINALIZING -> _state.value = RecorderUiState.Finalizing
                     OSTRecorderState.DONE -> {
-                        // New measurement was saved and ready for analysis.
-                        // You may call analyze() if you want immediate feedback,
-                        // Otherwise the SDK will handle the data sync and analysis in the background.
-                        Log.d(TAG, "RecorderState.DONE")
-                        state.value = it.name
-                        analyse()
+                        // The measurement is saved on-device. We auto-trigger analyze() here for
+                        // the demo's "tap Stop, see the result" UX.
+                        //
+                        // This is a deliberate demo choice, NOT a requirement. In production you
+                        // can move the analyse() call to a separate "Analyze" button, or skip the
+                        // immediate analyze entirely — the SDK's background worker will sync and
+                        // analyze on its own. The choice is purely about *when* your code wants
+                        // the result back.
+                        viewModelScope.launch { analyse() }
                     }
                 }
             }
         }
 
+        // Analyser state machine: Idle → Uploading → Analyzing → Analyzed | Failed
+        // The terminal state (Analyzed) plus the actual measurement payload is set
+        // inside analyse() below so the UI gets the OSTMotionMeasurement directly.
         viewModelScope.launch {
-            OneStep.motionLab.analyserState.collect {
-                when (it) {
-                    OSTAnalyserState.Idle -> {
-                        Log.d(TAG, "AnalyserState.IDLE")
-                    }
-
-                    OSTAnalyserState.Uploading -> {
-                        Log.d(TAG, "AnalyserState.UPLOADING")
-                        state.value = "Uploading"
-                    }
-
-                    OSTAnalyserState.Analyzing -> {
-                        Log.d(TAG, "AnalyserState.ANALYZING")
-                        state.value = "Analyzing"
-                    }
-
-                    OSTAnalyserState.Analyzed -> {
-                        // This means the technical analysis process is done and the result is ready
-                        Log.d(TAG, "AnalyserState.ANALYZED")
-                        state.value = "Analyzed"
-                    }
-
+            OneStep.motionLab.analyserState.collect { analyserState ->
+                Log.d(TAG, "AnalyserState: $analyserState")
+                when (analyserState) {
+                    OSTAnalyserState.Idle,
+                    OSTAnalyserState.Analyzed -> Unit // handled by analyse() result
+                    OSTAnalyserState.Uploading -> _state.value = RecorderUiState.Uploading
+                    OSTAnalyserState.Analyzing -> _state.value = RecorderUiState.Analyzing
                     is OSTAnalyserState.Failed -> {
-                        // This means the analysis process was technically failed (network error, timeout, etc..)
-                        // You can try recovery from the different cases:
-                        // - Network error: retry the analysis
-                        // - OneStep server error: try again later (or let the SDK background worker to handle it)
-                        // - Timeout: offer the user to wait more, or get notification when the result is ready
-                        Log.d(TAG, "AnalyserState.FAILED with error: ${it.error}")
-                        state.value = "Failed ${it.error}"
+                        // OSTAnalyserError subclasses describe the structured cause
+                        // (network, timeout, server, too-short, …) for finer recovery.
+                        _state.value = RecorderUiState.Failed("Analysis failed: ${analyserState.error}")
                     }
                 }
             }
@@ -104,233 +85,85 @@ class RecorderViewModel: ViewModel() {
     }
 
     /**
-     * Start recording a new session: timed walk (60 seconds).
+     * Start a 60-second timed walk recording.
      *
-     * Developer responsibility: handling recorder state machine (i.e not calling `start` when already recording)
-     * Developer responsibility: checking runtime permission (Activity Recognition is required since Android 14.0)
+     * Caller responsibilities:
+     *  - don't call start() while RECORDING (the demo's button gating prevents this).
+     *  - request ACTIVITY_RECOGNITION permission on Android 14+ (handled in MainScreen).
      */
     fun startRecording() {
-        // Reset the recorder before launching a new recording session
+        // reset() clears any previous session so a fresh one can begin.
         OneStep.motionLab.reset()
-        result.value = null
-        viewModelScope.launch {
-            // Technical key-value properties that will be propagate to the measurement result.
-            // Supporting primitive types like Boolean, Number, String
-            val metadata = mapOf("app" to "DemoApp", "is_demo" to true, "version" to 1.1)
 
-            // Optional user tagging of the activity including free-text note, tags,
-            // and domain specific enums like assistive device and level of assistance.
-            val userTagging = OSTUserInputMetaData(
-                note = "this is a free-text note",
-                tags = listOf("tag1", "tag2", "tag3"),
-                assistiveDevice = OSTAssistiveDevice.CANE,
+        viewModelScope.launch {
+            // Optional caller-supplied metadata, propagated to the measurement record.
+            val customMetadata = mapOf(
+                "app" to "DemoApp",
+                "is_demo" to true,
+                "version" to 1.1,
+            )
+
+            // Optional user tagging: free-text note, tags, and structured fields like
+            // assistive device and level of assistance.
+            val userInput = OSTUserInputMetaData(
+                note = "Sample recording",
+                tags = listOf("demo"),
+                assistiveDevice = OSTAssistiveDevice.NONE,
                 levelOfAssistance = OSTLevelOfAssistance.INDEPENDENT,
             )
 
             OneStep.motionLab.start(
                 activityType = OSTActivityType.WALK,
-                // Duration is the duration of the recording session in milli-seconds.
-                // The user can always stop the recording manually.
-                // If the duration is not provided, there is a technical limit of 6 minutes;
-                duration = 60 * 1000L,
-                customMetadata = metadata,
-                userInputMetadata = userTagging,
+                durationMillis = RECORDING_DURATION_MS,
+                customMetadata = customMetadata,
+                userInputMetadata = userInput,
             )
         }
     }
 
     fun stopRecording() {
-        viewModelScope.launch {
-            OneStep.motionLab.stop()
-        }
+        viewModelScope.launch { OneStep.motionLab.stop() }
     }
 
-
     /**
-     * Analyze the data is a multi-step transaction:
-     * 1. Uploading raw motion data to the OneStep servers
-     * 3. Data analysis pipeline will process the data asynchronously
-     * 4. SDK is pulling the analysis result when available
+     * Pull the analysis result.
      *
-     * For short walk, the process usually takes 5-15 seconds.
-     * Rarely it make take much longer, due to:
-     * - Bad internet connectivity
-     * - Server load
-     * - Long recording
+     * analyze() is a multi-step async transaction:
+     *   1. upload raw motion data to OneStep servers
+     *   2. server-side pipeline processes the data
+     *   3. SDK polls for the result
      *
-     * You can pass a "timeout" parameter to the analyze() method (default is 60 seconds).
+     * For a short walk this usually takes 5–15 seconds. A null return means the
+     * transaction failed (network, timeout, server) — the structured reason flows
+     * through analyserState as OSTAnalyserState.Failed.
      */
-    private fun analyse() {
-        viewModelScope.launch {
-            try {
-                OneStep.motionLab.analyze(timeout = 60 * 1000L)?.let {
-                    result.value = it  // update UI with the result
+    private suspend fun analyse() {
+        val measurement = OneStep.motionLab.analyze(timeout = ANALYZE_TIMEOUT_MS)
+        if (measurement == null) {
+            Log.w(TAG, "analyze() returned null — see analyserState for the reason")
+            return
+        }
 
-                    // Pay attention: getting the analysis result doesn't guarantee that the analysis is successful!
-                    when (it.resultState) {
-                        OSTResultState.FULL_ANALYSIS -> {
-                            Log.d(TAG, "Full analysis result is available")
-                            Log.d(TAG,
-                                "measurementId=${it.id}" +
-                                        " - steps=${it.metadata.steps}" +
-                                        " - walkScore=${it.params[OSTParamName.WALKING_WALK_SCORE] ?: "N/A"}"
-                            )
-
-                            // Example - Build summary screen
-                            motionBusinessLogicHere(it)
-
-                            // Example - compare to the weekly average
-                            weeklyAverageWalkScore()
-                        }
-
-                        OSTResultState.PARTIAL_ANALYSIS -> {
-                            Log.d(TAG, "Partial analysis result is available")
-                        }
-
-                        OSTResultState.EMPTY_ANALYSIS -> {
-                            Log.d(TAG, "Analysis error: ${it.error}")
-                        }
-
-                        else -> {
-                            Log.d(TAG, "Analysis result is not available")
-                        }
-                    }
-                } ?: run {
-                    // The transaction technically failed (network error, timeout, etc..)
-                    Log.w(TAG, "Result is not available, check analyser state for more details")
-                    result.value = null
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Analysis failed: ${e.message}")
-                result.value = null
+        when (measurement.resultState) {
+            OSTResultState.FULL_ANALYSIS,
+            OSTResultState.PARTIAL_ANALYSIS -> {
+                Log.d(TAG, "Analyzed: id=${measurement.id} steps=${measurement.metadata.steps}")
+                _state.value = RecorderUiState.Analyzed(measurement)
             }
-        }
-    }
-
-    /**
-     * This is an example of enriching the analyzed parameters with:
-     * - Metadata (i.e Display name, units, ..)
-     * - Norms (adjusted to sex, age, ..)
-     * - Motion Insights from the OneStep Engine (remote)
-     */
-    private suspend fun motionBusinessLogicHere(measurement: OSTMotionMeasurement) {
-        OneStep.insights.getMotionDataService().let { motionService ->
-            // You can enrich each parameters with metadata and norms
-            val focusParams = listOf(
-                OSTParamName.WALKING_VELOCITY,
-                OSTParamName.WALKING_DOUBLE_SUPPORT,
-                OSTParamName.WALKING_STRIDE_LENGTH
-            )
-            for (param in focusParams) {
-                measurement.params[param]?.let { value ->
-                    val metadata = motionService.getParameterMetadata(param)
-                    val displayName = "${metadata.displayName}: $value ${metadata.units ?: ""}"
-                    val isWithinNorms = motionService.isWithinNorms(param, value) ?: "N/A"
-                    val score = motionService.discreteScore(param, value) ?: "N/A"
-                    Log.d(TAG, displayName)
-                    Log.d(TAG, "Within norms?: $isWithinNorms")
-                    Log.d(TAG, "Score (red-yellow-green): $score")
-                    Log.d(TAG, "---")
-                } ?: run {
-                    Log.d(TAG, "Parameter $param is not available")
-                }
-            }
-
-            // You can query the insight service
-            when (val insights: OSTResult<OSTInsights> = motionService.getInsights(measurement.id)) {
-                is OSTResult.Error -> {
-                    Log.e(TAG, "Failed to fetch insights: ${insights.exception}")
-                }
-
-                is OSTResult.Success -> {
-                    Log.d(TAG, "Successfully fetched insights")
-                    insights.data.insights.take(3).forEach { insight ->
-                        Log.d(
-                            TAG,
-                            "Insight: ${insight.textMarkdown}" +
-                                    " - type=${insight.insightType}" +
-                                    " - intent=${insight.intent}" +
-                                    " - param?=${insight.paramName ?: "N/A"}"
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * This is an example of how to fetch norms and metadata for the measurements parameters.
-     *
-     * This API interface is still experimental and may change in the future.
-     */
-    private suspend fun getNorms() {
-        // Access the motion data service via insights
-        val motionDataService = OneStep.insights.getMotionDataService()
-        // Get the norms for the measurement result
-        val normsForMeasurement: List<OSTNorm>? = result.value?.params?.mapNotNull {
-            motionDataService.getNormByName(it.key)
-        }
-        // Get the parameter metadata for the measurement result
-        val parametersForMeasurement: List<OSTParameterMetadata>? = result.value?.params?.mapNotNull {
-            motionDataService.getParameterMetadata(it.key)
-        }
-        Log.d(TAG, "normsForMeasurement: $normsForMeasurement")
-        Log.d(TAG, "parametersForMeasurement: $parametersForMeasurement")
-
-        val velocityScore = result.value?.params?.get(OSTParamName.WALKING_VELOCITY)
-        Log.d(TAG, "velocityScore: $velocityScore")
-        val velocityNorm = motionDataService.getNormByName(OSTParamName.WALKING_VELOCITY)
-        Log.d(TAG, "velocityNorm: $velocityNorm")
-        val velocityMetadata = motionDataService.getParameterMetadata(OSTParamName.WALKING_VELOCITY)
-        Log.d(TAG, "velocityMetadata: $velocityMetadata")
-        val isVelocityWithinNorms = velocityScore?.let {
-            motionDataService.isWithinNorms(OSTParamName.WALKING_VELOCITY, it)
-        }
-        Log.d(TAG, "isVelocityWithinNorms: $isVelocityWithinNorms")
-
-        // A list of the parts of the scale that can be used to draw " ====|====|====" " in the UI
-        //                                                             Red  Green Yellow
-        val velocityScaleParts: List<OSTNormPart>? = motionDataService.getNormByName(OSTParamName.WALKING_VELOCITY)?.parts
-        Log.d(TAG, "velocityScaleParts: $velocityScaleParts")
-    }
-
-    /**
-     * This sample demonstrate reading motion measurement records collected by the SDK;
-     *
-     * It is useful for features like:
-     * - Sync data to the server (in case you don't activate BE<->BE integration)
-     * - Activity history
-     * - Trends
-     * - Widgets like "today" vs "past week" vs "baseline"
-     */
-    private fun weeklyAverageWalkScore() {
-        // read measurements
-        viewModelScope.launch {
-            val startOfWeek = Calendar.getInstance().apply {
-                set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }.timeInMillis
-            var records = OneStep.motionLab.readMotionMeasurements(
-                request = OSTTimeRangedDataRequest(
-                    timeRangeFilter = OSTTimeRangeFilter.after(startOfWeek),
+            OSTResultState.EMPTY_ANALYSIS -> {
+                _state.value = RecorderUiState.Failed(
+                    "Empty analysis: ${measurement.error?.message ?: "unknown"}"
                 )
-            )
-            // filter fully analyzed walks
-            records = records.filter { it.type == OSTActivityType.WALK }
-            records = records.filter { it.resultState == OSTResultState.FULL_ANALYSIS }
-
-            // access parameters and do logic
-            val walkScores = records.mapNotNull { it.params[OSTParamName.WALKING_WALK_SCORE] }
-            val averageWalkScore = walkScores.average()
-            Log.d(TAG, "average walk score during calendar week: $averageWalkScore")
-            Log.d(TAG, "calculated over ${walkScores.size} walks")
+            }
+            else -> {
+                _state.value = RecorderUiState.Failed("Analysis result not available")
+            }
         }
     }
 
-    companion object {
-        val TAG: String = MainViewModel::class.simpleName ?: "MainViewModel"
+    private companion object {
+        private val TAG = RecorderViewModel::class.simpleName ?: "RecorderViewModel"
+        private const val RECORDING_DURATION_MS = 60_000L
+        private const val ANALYZE_TIMEOUT_MS = 60_000L
     }
 }

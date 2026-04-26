@@ -2,10 +2,9 @@ package com.onestep.sdksample
 
 import android.app.Application
 import android.util.Log
-import co.onestep.android.core.OSTConfiguration
 import co.onestep.android.core.OneStep
-import co.onestep.android.core.OSTIdentifyResult
-import co.onestep.android.core.platform.models.OSTUserAttributes
+import co.onestep.android.core.OSTResult
+import co.onestep.android.core.OSTUserAttributes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -35,7 +34,7 @@ class SDKSampleApplication: Application() {
         )
 
         when (result) {
-            is OSTIdentifyResult.Success -> {
+            is OSTResult.Success -> {
                 Log.d(TAG, "SDK identified successfully")
 
                 // Set user attributes
@@ -53,7 +52,7 @@ class SDKSampleApplication: Application() {
                 EventsCollector.startCollecting(applicationScope)
             }
 
-            is OSTIdentifyResult.Failure -> {
+            is OSTResult.Error -> {
                 Log.e(TAG, "SDK identify failed: ${result.error} - ${result.message}")
             }
         }
