@@ -2,10 +2,11 @@ package com.onestep.backgroundmonitoringsample
 
 import android.app.Application
 import android.util.Log
-import co.onestep.android.core.OSTIdentifyResult
+import co.onestep.android.core.OSTConfiguration
+import co.onestep.android.core.OSTResult
 import co.onestep.android.core.OneStep
+import co.onestep.android.core.monitoring.OSTDefaultNotificationConfig
 import co.onestep.android.core.monitoring.OSTMonitoringConfig
-import co.onestep.android.core.monitoring.models.OSTDefaultNotificationConfig
 import com.onestep.backgroundmonitoringsample.analytics.EventsCollector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,19 +28,25 @@ class BgMonitoringSampleApplication : Application() {
         OneStep.initialize(
             application = this,
             clientToken = "<YOUR-CLIENT-TOKEN-HERE>",
+            config = OSTConfiguration(
+                additionalConfig = mapOf<String, Any>(
+                   // Add additional config here
+                )
+            )
         )
 
         // Step 2: Identify user (suspend function)
         applicationScope.launch {
             val result = OneStep.identify(
                 userId = "<A-UUID-FOR CURRENT-USER-HERE>",
-                identityVerification = null, //<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>ת
+                identityVerification = null, // <YOUR-IDENTITY-VERIFICATION-SECRET-HERE>,
+
             )
             when (result) {
-                is OSTIdentifyResult.Success -> {
+                is OSTResult.Success -> {
                     Log.d(TAG, "SDK identified successfully")
                     // Step 3: Initialize monitoring
-                    OneStep.monitoring.initialize(OSTMonitoringConfig())
+                    OneStep.monitoring.enable(OSTMonitoringConfig())
                     // Step 4: Set notification
                     OneStep.monitoring.setCustomMonitoringNotification(
                         OSTDefaultNotificationConfig(
@@ -49,7 +56,7 @@ class BgMonitoringSampleApplication : Application() {
                         )
                     )
                 }
-                is OSTIdentifyResult.Failure -> {
+                is OSTResult.Error -> {
                     Log.e(TAG, "SDK identify failed: ${result.error} - ${result.message}")
                 }
             }
