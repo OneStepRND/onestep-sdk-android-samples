@@ -96,7 +96,7 @@ fun MainScreen(
 
         MainButton(
             "Knee flexion test",
-            co.onestep.android.uikit.R.drawable.ic_knee_flexion,
+            co.onestep.android.uikit.R.drawable.ic_knee_extention,
             primary
         ) {
             onStartRomTest()

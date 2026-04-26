@@ -3,7 +3,7 @@
 [![Platform](https://img.shields.io/badge/platform-Android-green.svg)](https://github.com/OneStepRND/onestep-sdk-android-samples/tree/main/UiKitSample)
 [![Languages](https://img.shields.io/badge/language-Kotlin-orange.svg)](https://github.com/OneStepRND/onestep-sdk-android-samples/tree/main/UiKitSample)
 ![Commercial License](https://img.shields.io/badge/license-Commercial-green.svg)
-![UiKit Version](https://img.shields.io/badge/version-1.2.1-blue.svg)
+![UiKit](https://img.shields.io/badge/uikit-2.0.0-blue.svg)
 
 ## Introduction
 
@@ -39,9 +39,16 @@ OneStep UIKit provides customization options, enabling you to tailor the UI comp
 
 ### Requirements
 
-The minimum requirements for OneStep UIKit for Android are:
+| Component | Version |
+|---|---|
+| Android API (min) | 26 |
+| Android API (target / compile) | 35 |
+| Android Gradle Plugin | 9.0.0 |
+| Kotlin | 2.2.10 |
+| Compose BOM | 2024.09.02 |
+| OneStep UIKit | 2.0.0 |
 
-- API version 26+
+This sample is the canonical toolchain reference for the repo — its `gradle/libs.versions.toml` is what the other sample apps' READMEs are aligned with.
 
 ### API Keys
 
@@ -58,17 +65,25 @@ You can retrieve these credentials from the OneStep back-office under Developers
 
 Our sample app has all the core features of OneStep UIKit for Android. Download the app from our GitHub repository to get an idea of what you can build with the actual UIKit before building your own project.
 
-### Use your API key
-To start using the OneStep SDK, initialize it in your `Application` class or equivalent entry point of your app:
+### Use your client token
+
+Initialize the SDK once (typically in your `Application.onCreate`), then identify the current user. `identify` is a suspend function and returns an `OSTResult<Unit>` you should branch on.
 
 ```kotlin
- OneStep.Builder(
-    this.applicationContext,
-    apiKey = API_KEY,//"<YOUR-API-KEY-HERE>",
-    appId = APP_ID,//"<YOUR-APP-ID-HERE>",
-    distinctId = //"<YOUR-USER-DISTINCT-ID>",
-    identityVerification = //"<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>", // or null if in development
+OneStep.initialize(
+    application = this,
+    clientToken = "<YOUR-CLIENT-TOKEN>",
 )
+
+val result = OneStep.identify(
+    userId = "<YOUR-USER-DISTINCT-ID>",
+    identityVerification = "<YOUR-IDENTITY-VERIFICATION-SECRET>", // or null in development
+)
+
+when (result) {
+    is OSTResult.Success -> { /* SDK ready */ }
+    is OSTResult.Error -> Log.e("OneStep", "identify failed: ${result.error} - ${result.message}")
+}
 ```
 
 ### Installation

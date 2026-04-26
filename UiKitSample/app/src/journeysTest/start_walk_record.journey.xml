@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<journey name="Start walk record">
+    <description xml:space="preserve">Jurney1</description>
+    <actions xml:space="preserve">
+        <action>Start the app</action>
+        <action>Click on the first button on the top</action>
+        <action>Click 3 minutes, move on with the flow, press the big blue button, press start immidiatly, slide to stope after 15 seconds</action>
+        <action>Assert an error screen</action>
+        </actions>
+</journey>
