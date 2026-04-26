@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew assembleDebug:*)",
+      "Bash(./gradlew dependencies:*)",
+      "Bash(./gradlew :app:dependencies:*)",
+      "Bash(jar tf:*)",
+      "Bash(javap:*)"
+    ]
+  }
+}

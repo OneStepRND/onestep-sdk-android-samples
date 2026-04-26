@@ -3,9 +3,7 @@ package com.onestep.backgroundmonitoringsample.screens
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,7 +31,6 @@ import co.onestep.android.core.OneStep
 import co.onestep.android.core.monitoring.OSTMonitoringPreference
 import co.onestep.android.core.monitoring.OSTMonitoringRuntimeState
 import com.onestep.backgroundmonitoringsample.components.SafeSDKButton
-import com.onestep.backgroundmonitoringsample.ui.model.ScreenType
 import com.onestep.backgroundmonitoringsample.ui.model.MonitoringUiState
 
 @Composable
@@ -41,9 +38,10 @@ fun MonitoringScreen(
     monitoringState: MonitoringUiState,
     onOptIn: () -> Unit,
     onOptOut: () -> Unit,
-    onShowRecords: (ScreenType) -> Unit,
+    onShowRecords: () -> Unit,
 ) {
     val context = LocalContext.current
+    val isActive = monitoringState.runtimeState is OSTMonitoringRuntimeState.Active
 
     Column(
         modifier = Modifier
@@ -57,9 +55,9 @@ fun MonitoringScreen(
         ScreenTitle(
             Modifier.align(CenterHorizontally),
             when {
-                monitoringState.isActive -> "Background Monitoring On"
+                isActive -> "Background Monitoring On"
                 monitoringState.runtimeState is OSTMonitoringRuntimeState.Blocked -> {
-                    val blockers = (monitoringState.runtimeState as OSTMonitoringRuntimeState.Blocked).reasons
+                    val blockers = monitoringState.runtimeState.reasons
                     "Monitoring Blocked: ${blockers.joinToString()}"
                 }
                 monitoringState.runtimeState is OSTMonitoringRuntimeState.Error -> "Monitoring Error"
@@ -71,36 +69,23 @@ fun MonitoringScreen(
         SafeSDKButton(
             modifier = Modifier.align(CenterHorizontally),
             icon = Icons.Default.PlayArrow,
-            action = {
-                if (monitoringState.isActive) {
-                    onOptOut()
-                } else {
-                    onOptIn()
-                }
-            }) {
+            action = { if (isActive) onOptOut() else onOptIn() },
+        ) {
             Text(
-                if (monitoringState.isActive) "Stop bg monitoring" else "Start bg monitoring",
+                if (isActive) "Stop bg monitoring" else "Start bg monitoring",
                 color = Color(0xFF4678B4),
             )
         }
         Spacer(modifier = Modifier.height(32.dp))
         HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
         Spacer(modifier = Modifier.height(32.dp))
-        ScreenTitle(Modifier.align(CenterHorizontally), text = "Aggregated Data")
-        Spacer(modifier = Modifier.height(32.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            Button(
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                border = BorderStroke(1.dp, Color(0xFF4678B4)),
-                onClick = { onShowRecords(ScreenType.DAILY_SUMMARIES) }) {
-                Text(text = "Daily", color = Color(0xFF4678B4))
-            }
-            Button(
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                border = BorderStroke(1.dp, Color(0xFF4678B4)),
-                onClick = { onShowRecords(ScreenType.WALKING_BOUTS) }) {
-                Text(text = "Walking Bouts", color = Color(0xFF4678B4))
-            }
+        Button(
+            modifier = Modifier.align(CenterHorizontally),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+            border = BorderStroke(1.dp, Color(0xFF4678B4)),
+            onClick = { onShowRecords() },
+        ) {
+            Text(text = "View Daily Summaries", color = Color(0xFF4678B4))
         }
         Spacer(modifier = Modifier.height(32.dp))
         ScreenTitle(text = "Syncing")
@@ -112,11 +97,12 @@ fun MonitoringScreen(
             action = {
                 Toast.makeText(context, "Syncing OneStep data", Toast.LENGTH_SHORT).show()
                 OneStep.sync()
-            }) {
+            },
+        ) {
             Text(
                 fontSize = 20.sp,
                 color = Color(0xFF4678B4),
-                text = "Sync Now"
+                text = "Sync Now",
             )
         }
     }
@@ -125,7 +111,7 @@ fun MonitoringScreen(
 @Composable
 private fun ScreenTitle(
     modifier: Modifier = Modifier,
-    text: String
+    text: String,
 ) {
     AnimatedContent(
         targetState = text,
@@ -139,7 +125,7 @@ private fun ScreenTitle(
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .fillMaxWidth()
-                .then(modifier)
+                .then(modifier),
         )
     }
 }

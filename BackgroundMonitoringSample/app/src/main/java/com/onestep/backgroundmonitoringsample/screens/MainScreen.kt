@@ -78,12 +78,12 @@ fun MainScreen(viewModel: MainViewModel) {
                     onOptIn = { viewModel.optInToMonitoring() },
                     onOptOut = { viewModel.optOutOfMonitoring() },
                     onShowRecords = {
-                        viewModel.showRecords(it)
+                        viewModel.setState(ScreenState.Records)
                     },
                 )
             }
 
-            is ScreenState.Records -> RecordsListScreen(screenType = state.screenType)
+            is ScreenState.Records -> RecordsListScreen()
         }
     }
 }
