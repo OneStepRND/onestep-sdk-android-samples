@@ -19,7 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
-import co.onestep.android.core.external.models.sdkOut.OSTInitResult
+import co.onestep.android.core.OneStep
 import co.onestep.android.uikit.features.carlog.presentation.OSTCarelogActivity
 import co.onestep.android.uikit.features.permissions.OSTPermissionFlowActivity
 import co.onestep.android.uikit.features.recordFlow.configurations.OSTRecordingConfiguration
@@ -43,7 +43,8 @@ class MainActivity : AppCompatActivity() {
         if (supportActionBar != null) {
             supportActionBar?.hide()
         }
-        collectSDKConnectionState()
+        collectSDKState()
+
         setContent {
             val scope = rememberCoroutineScope()
             val snackbarHostState = remember { SnackbarHostState() }
@@ -55,11 +56,13 @@ class MainActivity : AppCompatActivity() {
                         modifier = Modifier.padding(padding).background(color = MaterialTheme.colorScheme.surface),
                         viewModel,
                         connect = { connect() },
-                        onStartDefaultRecording = { startRecordingFlow(OSTRecordingConfiguration.defaultWalk(this)) },
+                        onStartDefaultRecording = {
+                            startRecordingFlow(OSTRecordingConfiguration.defaultWalk(this).copy(readyForAnalysisUiAssist = true))
+                                                  },
                         onStartTugTest = { startRecordingFlow(OSTRecordingConfiguration.tug(this)) },
                         onStartStsTest = { startRecordingFlow(OSTRecordingConfiguration.sts(this)) },
                         onStartDualTaskTest = { startRecordingFlow(OSTRecordingConfiguration.dualTaskSubtract(this, instructions = "This will be displayed in the preparation screen prior to the test, you can use this stub to read instructions to your subject")) },
-                        onStartRomTest = { startRecordingFlow(OSTRecordingConfiguration.rom(this)) },
+                        onStartRomTest = { startRecordingFlow(OSTRecordingConfiguration.romExt(this)) },
                         onStartBalanceTest = { startRecordingFlow(OSTRecordingConfiguration.balanceTest(this)) },
                         onStartPermissionsFlow = {
                             if (context.applicationContext.checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
@@ -67,16 +70,10 @@ class MainActivity : AppCompatActivity() {
                                     snackbarHostState.showSnackbar(message = permissionsMessage)
                                 }
                             } else {
-                                /*
-                                 * Start the OneStep permission collection flow.
-                                 */
                                 startActivity(OSTPermissionFlowActivity.buildIntent(this))
                             }
                         },
                         onStartCareLogActivity = {
-                            /*
-                             * Start the OneStep UIKit Carelog (Activity History).
-                             */
                             startActivity(OSTCarelogActivity.buildIntent(this))
                         },
                     )
@@ -100,34 +97,19 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-
-
-    private fun collectSDKConnectionState() {
-        val uiKitSampleApplication = application as UiKitSampleApplication
-        viewModel.isConnecting = uiKitSampleApplication.isConnecting
+    private fun collectSDKState() {
         lifecycleScope.launch {
-            uiKitSampleApplication.sdkConnectionState.collect {
-                viewModel.sdkInitialized = it
+            OneStep.state.collect { state ->
+                viewModel.sdkState = state
                 viewModel.isConnecting = false
             }
         }
     }
 
-
     private fun connect() {
         viewModel.isConnecting = true
-        (application as UiKitSampleApplication).connect { result ->
-            viewModel.sdkInitialized = when (result) {
-                is OSTInitResult.Success -> {
-                    viewModel.isConnecting = false
-                    result
-                }
-
-                is OSTInitResult.Error -> {
-                    viewModel.isConnecting = false
-                    result
-                }
-            }
+        lifecycleScope.launch {
+            (application as UiKitSampleApplication).initializeSdk()
         }
     }
 }

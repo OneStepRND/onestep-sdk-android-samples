@@ -2,84 +2,49 @@ package com.onestep.onestepuikitsample
 
 import android.app.Application
 import android.util.Log
-import co.onestep.android.core.external.OneStep
-import co.onestep.android.core.external.models.sdkOut.NotificationConfig
-import co.onestep.android.core.external.models.sdkOut.OSTInitResult
-import co.onestep.android.core.external.models.sdkOut.OSTSdkConfiguration
-import co.onestep.android.core.external.models.sdkOut.OSTUserAttributes
+import co.onestep.android.core.OSTResult
+import co.onestep.android.core.OSTUserAttributes
+import co.onestep.android.core.OneStep
 import co.onestep.android.uikit.OSTTheme
-import co.onestep.android.uikit.ui.theme.OSTThemeManager
-import co.onestep.android.uikit.ui.theme.primary
 import co.onestep.android.uikit.ui.typography.NoirFontFamily
-import com.onestep.onestepuikitsample.analytics.SampleAnalytics
-import kotlinx.coroutines.flow.MutableSharedFlow
+import com.onestep.onestepuikitsample.analytics.EventsCollector
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 class UiKitSampleApplication: Application() {
 
-
-    val sdkConnectionState = MutableSharedFlow<OSTInitResult>(1)
-
-    var isConnecting = false
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override fun onCreate() {
         super.onCreate()
-
-        // This should be managed in a view model or a state holder
-        isConnecting = true
-        connect {
-            Log.d("UiKitSampleApplication", "connection result $it")
-            isConnecting = false
-            sdkConnectionState.tryEmit(it)
-        }
-
-        // Customize the uikit theme
-        OSTThemeManager.updateColorScheme(
-            OSTTheme.colorScheme.value.copy(
-                primary = primary,
-            )
-        )
         OSTTheme.font = NoirFontFamily
     }
 
-    /**
-     * The UIKit requires a connection to the OneStep SDK.
-     */
-    fun connect(
-        onConnectionResult: (OSTInitResult) -> Unit
-    ) {
-        OneStep.Builder(
-            this.applicationContext,
-            apiKey = "<YOUR-API-KEY-HERE>",
-            appId = "<YOUR-APP-ID-HERE>",
-            distinctId = "<YOUR-USER-DISTINCT-ID",
-            identityVerification = null //<YOUR-IDENTITY-VERIFICATION-SECRET-HERE>, // or null if in development
+    suspend fun initializeSdk() {
+        OneStep.initialize(
+            this,
+            clientToken = "<YOUR_CLIENT_TOKEN_HERE>",
         )
-            // UIKit currently focus on the in-app activity
-            .setBackgroundMonitoringEnabled(false)
-            // optional user profile - gait norms are age and sex adjusted
-            .setUserAttributes(
-                OSTUserAttributes.Builder()
-                    .withAge(60)
-                    .withSex(OSTUserAttributes.Sex.FEMALE)
-                    .build()
-            )
-            // implement the AnalyticsHandler interface to receive analytics events
-            .setAnalyticsService(SampleAnalytics())
-            // set the foreground notification configuration attributes for the active measurements
-            .setInAppNotificationConfig(
-                NotificationConfig(
-                    title = "This is the Sample App recording",
-                    icon = R.drawable.ic_launcher_foreground,
-                ),
-            )
-            .setConfiguration(
-                OSTSdkConfiguration(
-                    mockIMU = false,  // set to true to mock the recording data
+
+        val result = OneStep.identify(
+            userId = "<YOUR_IDENTITY_HERE>",
+            identityVerification = null
+        )
+
+        when (result) {
+            is OSTResult.Success -> {
+                OneStep.updateUserAttributes(
+                    OSTUserAttributes.Builder()
+                        .withAge(60)
+                        .withSex(OSTUserAttributes.Sex.FEMALE)
+                        .build()
                 )
-            )
-            .setInitializationCallback {
-                onConnectionResult(it)
+                EventsCollector.startCollecting(applicationScope)
             }
-            .build()
+            is OSTResult.Error -> {
+                Log.e("UiKitSampleApplication", "Identify failed: ${result.message}")
+            }
+        }
     }
 }
