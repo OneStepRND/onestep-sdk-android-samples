@@ -5,13 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.onestep.android.core.OSTActivityType
 import co.onestep.android.core.OneStep
+import co.onestep.android.core.getOr
 import co.onestep.android.core.motionLab.OSTAnalyserState
 import co.onestep.android.core.motionLab.OSTAssistiveDevice
 import co.onestep.android.core.motionLab.OSTLevelOfAssistance
 import co.onestep.android.core.motionLab.OSTMotionMeasurement
 import co.onestep.android.core.motionLab.OSTRecorderState
 import co.onestep.android.core.motionLab.OSTResultState
-import co.onestep.android.core.motionLab.OSTUserInputMetaData
+import co.onestep.android.core.motionLab.getMotionLab
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,13 +37,21 @@ sealed interface RecorderUiState {
 
 class RecorderViewModel : ViewModel() {
 
+    // The SDK is initialised in SDKSampleApplication.onCreate() so by the time this
+    // ViewModel is constructed (WalkRecordScreen is only shown after identify) we can
+    // safely fetch the process-singleton handle.
+    private val oneStep: OneStep = OneStep.getInstance().getOr(null)
+        ?: error("OneStep SDK not initialized")
+    private val motionLab = oneStep.getMotionLab().getOr(null)
+        ?: error("MotionLab unavailable")
+
     private val _state = MutableStateFlow<RecorderUiState>(RecorderUiState.Idle)
     val state: StateFlow<RecorderUiState> = _state.asStateFlow()
 
     init {
         // Recorder state machine: INITIALIZED → RECORDING → FINALIZING → DONE
         viewModelScope.launch {
-            OneStep.motionLab.recorderState.collect { recorderState ->
+            motionLab.recorderState.collect { recorderState ->
                 Log.d(TAG, "RecorderState: $recorderState")
                 when (recorderState) {
                     OSTRecorderState.INITIALIZED -> _state.value = RecorderUiState.Idle
@@ -67,7 +76,7 @@ class RecorderViewModel : ViewModel() {
         // The terminal state (Analyzed) plus the actual measurement payload is set
         // inside analyse() below so the UI gets the OSTMotionMeasurement directly.
         viewModelScope.launch {
-            OneStep.motionLab.analyserState.collect { analyserState ->
+            motionLab.analyserState.collect { analyserState ->
                 Log.d(TAG, "AnalyserState: $analyserState")
                 when (analyserState) {
                     OSTAnalyserState.Idle,
@@ -93,36 +102,32 @@ class RecorderViewModel : ViewModel() {
      */
     fun startRecording() {
         // reset() clears any previous session so a fresh one can begin.
-        OneStep.motionLab.reset()
+        motionLab.reset()
 
         viewModelScope.launch {
-            // Optional caller-supplied metadata, propagated to the measurement record.
-            val customMetadata = mapOf(
-                "app" to "DemoApp",
-                "is_demo" to true,
-                "version" to 1.1,
-            )
-
-            // Optional user tagging: free-text note, tags, and structured fields like
-            // assistive device and level of assistance.
-            val userInput = OSTUserInputMetaData(
-                note = "Sample recording",
-                tags = listOf("demo"),
-                assistiveDevice = OSTAssistiveDevice.NONE,
-                levelOfAssistance = OSTLevelOfAssistance.INDEPENDENT,
-            )
-
-            OneStep.motionLab.start(
+            motionLab.start(
                 activityType = OSTActivityType.WALK,
                 durationMillis = RECORDING_DURATION_MS,
-                customMetadata = customMetadata,
-                userInputMetadata = userInput,
+                userInputMetadata = {
+                    // Optional user tagging: free-text note, tags, and structured fields like
+                    // assistive device and level of assistance.
+                    note = "Sample recording"
+                    tags = listOf("demo")
+                    assistiveDevice = OSTAssistiveDevice.NONE
+                    levelOfAssistance = OSTLevelOfAssistance.INDEPENDENT
+                    // Optional caller-supplied metadata, propagated to the measurement record.
+                    customMetadata(
+                        "app" to "DemoApp",
+                        "is_demo" to true,
+                        "version" to 1.1,
+                    )
+                },
             )
         }
     }
 
     fun stopRecording() {
-        viewModelScope.launch { OneStep.motionLab.stop() }
+        viewModelScope.launch { motionLab.stop() }
     }
 
     /**
@@ -133,14 +138,13 @@ class RecorderViewModel : ViewModel() {
      *   2. server-side pipeline processes the data
      *   3. SDK polls for the result
      *
-     * For a short walk this usually takes 5–15 seconds. A null return means the
+     * For a short walk this usually takes 5–15 seconds. An Error result means the
      * transaction failed (network, timeout, server) — the structured reason flows
      * through analyserState as OSTAnalyserState.Failed.
      */
     private suspend fun analyse() {
-        val measurement = OneStep.motionLab.analyze(timeout = ANALYZE_TIMEOUT_MS)
-        if (measurement == null) {
-            Log.w(TAG, "analyze() returned null — see analyserState for the reason")
+        val measurement = motionLab.analyze(timeout = ANALYZE_TIMEOUT_MS).getOr(null) ?: run {
+            Log.w(TAG, "analyze() failed — see analyserState for the reason")
             return
         }
 
@@ -155,7 +159,7 @@ class RecorderViewModel : ViewModel() {
                     "Empty analysis: ${measurement.error?.message ?: "unknown"}"
                 )
             }
-            else -> {
+            null -> {
                 _state.value = RecorderUiState.Failed("Analysis result not available")
             }
         }

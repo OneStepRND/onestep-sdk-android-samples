@@ -8,9 +8,9 @@ import kotlinx.coroutines.launch
 object EventsCollector {
     private const val TAG = "EventsCollector"
 
-    fun startCollecting(scope: CoroutineScope) {
+    fun startCollecting(oneStep: OneStep, scope: CoroutineScope) {
         scope.launch {
-            OneStep.events.collect { event ->
+            oneStep.events.collect { event ->
                 Log.i(TAG, "Event: ${event.name}, ${event.properties}")
             }
         }

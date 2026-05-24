@@ -8,7 +8,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import co.onestep.android.core.OSTState
+import co.onestep.android.core.OSTIdentificationState
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -35,7 +35,7 @@ fun MainScreen(
             }
         }
 
-        sdkState is OSTState.Uninitialized || sdkState is OSTState.Error -> {
+        sdkState is OSTIdentificationState.Unidentified || sdkState is OSTIdentificationState.Lost -> {
             SDKnotInitialized(viewModel) { connect() }
         }
 

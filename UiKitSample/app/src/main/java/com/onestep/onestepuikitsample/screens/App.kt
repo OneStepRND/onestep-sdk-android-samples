@@ -2,7 +2,7 @@ package com.onestep.onestepuikitsample.screens
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import co.onestep.android.core.OSTState
+import co.onestep.android.core.OSTIdentificationState
 import com.onestep.onestepuikitsample.MainViewModel
 import com.onestep.onestepuikitsample.ui.componenets.Loading
 
@@ -22,8 +22,8 @@ fun App(
 ) {
     when {
         viewModel.isConnecting -> Loading()
-        viewModel.sdkState is OSTState.Uninitialized
-                || viewModel.sdkState is OSTState.Error -> SDKnotInitialized(viewModel) { connect() }
+        viewModel.sdkState is OSTIdentificationState.Unidentified
+                || viewModel.sdkState is OSTIdentificationState.Lost -> SDKnotInitialized(viewModel) { connect() }
         else -> MainScreen(
             modifier,
             onStartDefaultRecording,

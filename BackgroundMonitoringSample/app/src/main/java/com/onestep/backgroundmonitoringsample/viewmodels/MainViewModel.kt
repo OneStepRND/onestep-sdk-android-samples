@@ -1,13 +1,14 @@
 package com.onestep.backgroundmonitoringsample.viewmodels
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.onestep.android.core.OSTState
+import co.onestep.android.core.OSTIdentificationState
 import co.onestep.android.core.OneStep
+import co.onestep.android.core.getOr
+import co.onestep.android.core.monitoring.getMonitoring
 import com.onestep.backgroundmonitoringsample.ui.model.MonitoringUiState
 import com.onestep.backgroundmonitoringsample.ui.model.ScreenState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
+
+    // The SDK is initialised in BgMonitoringSampleApplication.onCreate(), so by the
+    // time this ViewModel is constructed the process-singleton handle is available.
+    private val oneStep: OneStep = OneStep.getInstance().getOr(null)
+        ?: error("OneStep SDK not initialized")
 
     var screenState by mutableStateOf<ScreenState>(ScreenState.Loading)
 
@@ -28,52 +34,49 @@ class MainViewModel : ViewModel() {
 
     fun start() {
         viewModelScope.launch {
-            OneStep.state.collect { state ->
+            oneStep.identificationState.collect { state ->
                 when (state) {
-                    is OSTState.Identified -> {
+                    is OSTIdentificationState.Identified -> {
                         collectMonitoringState()
                         screenState = ScreenState.Initialized
                     }
-                    is OSTState.Error -> screenState = ScreenState.Error("SDK Error: ${state.message}")
-                    is OSTState.Ready,
-                    is OSTState.Uninitialized -> screenState = ScreenState.Loading
+                    is OSTIdentificationState.Lost ->
+                        screenState = ScreenState.Error("SDK session lost: ${state.cause.message}")
+                    OSTIdentificationState.Unidentified ->
+                        screenState = ScreenState.Loading
                 }
             }
         }
     }
 
     fun optInToMonitoring() {
-        Log.d("Zivi", "optInToMonitoring")
         viewModelScope.launch {
-            Log.d("Zivi", "OneStep.state.value: ${OneStep.state.value}")
-            if (OneStep.state.value is OSTState.Identified) {
-                OneStep.monitoring.optIn()
+            if (oneStep.identificationState.value is OSTIdentificationState.Identified) {
+                oneStep.getMonitoring().getOr(null)?.optIn()
             }
         }
     }
 
     fun optOutOfMonitoring() {
-        Log.d("Zivi", "optOutOfMonitoring")
-
         viewModelScope.launch {
-            if (OneStep.state.value is OSTState.Identified) {
-                OneStep.monitoring.optOut()
+            if (oneStep.identificationState.value is OSTIdentificationState.Identified) {
+                oneStep.getMonitoring().getOr(null)?.optOut()
             }
         }
     }
 
     private fun collectMonitoringState() {
         viewModelScope.launch {
+            val monitoring = oneStep.getMonitoring().getOr(null) ?: return@launch
             combine(
-                OneStep.monitoring.state,
-                OneStep.monitoring.preference,
+                monitoring.state,
+                monitoring.preference,
             ) { runtimeState, preference ->
                 MonitoringUiState(
                     preference = preference,
                     runtimeState = runtimeState,
                 )
             }.collect {
-                Log.d("Zivi", "collectMonitoringState: $it")
                 _monitoringUiState.value = it
             }
         }
