@@ -3,8 +3,8 @@
 ## Versioning
 
 ![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)
-![Core](https://img.shields.io/badge/core-2.0.0-red.svg)
-![UiKit](https://img.shields.io/badge/uikit-2.0.0-blue.svg)
+![Core](https://img.shields.io/badge/core-2.0.0--RC1-red.svg)
+![UiKit](https://img.shields.io/badge/uikit-2.0.0--RC1-blue.svg)
 
 This repository contains sample Android applications demonstrating how to integrate and use the OneStep SDK for motion analysis. The apps showcase how to record motion data, analyze it, and display the results within your own application.
 
@@ -28,51 +28,63 @@ The OneStep SDK is currently available exclusively to our customers. We provide 
 | Android Gradle Plugin | 9.0.0 |
 | Kotlin | 2.2.10 |
 | Compose BOM | 2024.09.02 |
-| OneStep SDK (core / uikit) | 2.0.0 |
+| OneStep SDK (core / uikit) | 2.0.0-RC1 |
 
 Toolchain versions mirror `UiKitSample/gradle/libs.versions.toml`, the canonical reference for sample apps in this repo. Bump versions there first, then propagate.
 
 ### Installation
 
-Initialize the SDK once (typically in your `Application.onCreate`), then identify the current user. `identify` is a suspend function and returns an `OSTResult<Unit>` you should branch on.
+`OneStep.initialize` returns an `OSTResult<OneStep>` — the success value is the SDK instance you use for everything else. Hold on to it (e.g. on your `Application`) and bind a user via `setPatient`, which is suspend and returns an `OSTResult`.
 
 ```kotlin
-OneStep.initialize(
-    application = this,
-    clientToken = "<YOUR-CLIENT-TOKEN>",
-)
+class MyApplication : Application() {
 
-val result = OneStep.identify(
-    userId = "<YOUR-USER-DISTINCT-ID>",
-    identityVerification = "<YOUR-IDENTITY-VERIFICATION-SECRET>", // or null in development
-)
+    lateinit var oneStepSdk: OneStep
+        private set
 
-when (result) {
-    is OSTResult.Success -> {
-        // SDK is ready. Optionally set user attributes:
-        OneStep.updateUserAttributes(
-            OSTUserAttributes.Builder()
-                .withSex(OSTUserAttributes.Sex.MALE)
-                .build()
-        )
+    override fun onCreate() {
+        super.onCreate()
+        OneStep.initialize(
+            application = this,
+            onAuthLost = { error ->
+                // Called when the session expires (401/403)
+                Log.w("OneStep", "Auth lost: ${error.message}")
+            },
+        ).onSuccess { oneStep ->
+            oneStepSdk = oneStep
+        }.onError { error ->
+            Log.e("OneStep", "init failed: ${error.cause.message}")
+        }
     }
-    is OSTResult.Error -> {
-        // result.error is OSTResult.Code (INVALID_CLIENT_TOKEN, NETWORK_ERROR, …)
-        Log.e("OneStep", "identify failed: ${result.error} - ${result.message}")
+
+    suspend fun connectUser() {
+        oneStepSdk.setPatient(
+            apiKey = "<YOUR-CLIENT-TOKEN>",
+            customerPatientId = "<YOUR-USER-DISTINCT-ID>",
+            identityVerification = "<YOUR-IDENTITY-VERIFICATION-SECRET>", // or null in development
+            userAttributes = {
+                // Optional — set atomically with identification
+                withSex(OSTUserAttributes.Sex.MALE)
+            },
+        ).onError { error ->
+            // error.cause.type is OSTError.Type (InvalidClientToken, NetworkError, …)
+            Log.e("OneStep", "setPatient failed: ${error.cause.type} - ${error.cause.message}")
+        }
     }
 }
 ```
 
 ### Observe SDK state
 
+`identificationState` is the single source of truth for whether a patient is bound.
+
 ```kotlin
 lifecycleScope.launch {
-    OneStep.state.collect { state ->
+    oneStepSdk.identificationState.collect { state ->
         when (state) {
-            is OSTState.Uninitialized -> { /* not yet initialized */ }
-            is OSTState.Ready -> { /* initialized, no user identified */ }
-            is OSTState.Identified -> { /* state.userId is identified */ }
-            is OSTState.Error -> { /* state.code, state.message */ }
+            OSTIdentificationState.Unidentified -> { /* SDK is initialized, no user bound */ }
+            is OSTIdentificationState.Identified -> { /* state.patientId is identified */ }
+            is OSTIdentificationState.Lost -> { /* state.cause describes the loss (401/403, expired, …) */ }
         }
     }
 }
@@ -81,7 +93,7 @@ lifecycleScope.launch {
 ### Logout
 
 ```kotlin
-OneStep.logout()
+oneStepSdk.clearPatient()
 ```
 
-`logout()` clears credentials, stops monitoring, and reverts the SDK to `OSTState.Ready`. SDK initialization is preserved — you don't need to call `initialize()` again before the next `identify()`.
+`clearPatient()` clears credentials, stops monitoring, and transitions `identificationState` back to `Unidentified`. SDK initialization is preserved — you don't need to call `initialize()` again before the next `setPatient()`.
