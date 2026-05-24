@@ -6,8 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.lifecycleScope
-import co.onestep.android.core.OneStep
-import co.onestep.android.core.OSTState
+import co.onestep.android.core.OSTIdentificationState
 import com.onestep.sdksample.screens.MainScreen
 import com.onestep.sdksample.viewmodels.MainViewModel
 import kotlinx.coroutines.launch
@@ -18,7 +17,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        collectSDKState()
+        val app = application as SDKSampleApplication
+        collectSDKState(app)
         setContent {
             val coroutineScope = rememberCoroutineScope()
             MainScreen(
@@ -26,24 +26,24 @@ class MainActivity : ComponentActivity() {
                 connect = {
                     coroutineScope.launch {
                         viewModel.isConnecting = true
-                        (application as SDKSampleApplication).initializeSdk()
+                        app.connectUser()
                     }
                 },
                 disconnect = {
-                    // equivalent to "logout"
-                    // cleaning: JWT token, preferences, cached data, workers, monitoring...
-                    OneStep.logout()
-                    viewModel.sdkState = OSTState.Uninitialized
+                    // equivalent to "logout" — clears the bound patient,
+                    // tokens, preferences, cached data, workers, monitoring…
+                    app.oneStepSdk.clearPatient()
+                    viewModel.sdkState = OSTIdentificationState.Unidentified
                 }
             )
         }
     }
 
-    private fun collectSDKState() {
+    private fun collectSDKState(app: SDKSampleApplication) {
         lifecycleScope.launch {
-            OneStep.state.collect { state ->
+            app.oneStepSdk.identificationState.collect { state ->
                 viewModel.sdkState = state
-                if (state !is OSTState.Uninitialized) {
+                if (state !is OSTIdentificationState.Unidentified) {
                     viewModel.isConnecting = false
                 }
             }

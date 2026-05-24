@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import co.onestep.android.core.OSTState
+import co.onestep.android.core.OSTIdentificationState
 import com.onestep.sdksample.viewmodels.MainViewModel
 import kotlinx.coroutines.launch
 
@@ -27,7 +27,7 @@ fun SDKnotInitialized(
     ) {
 
         Text(
-            text = "OneStep SDK is not initialized",
+            text = "OneStep SDK is not identified",
             modifier = Modifier
                 .padding(16.dp)
                 .align(Alignment.CenterHorizontally),
@@ -42,13 +42,13 @@ fun SDKnotInitialized(
                 }
             }
         ) {
-            Text("Initialize SDK")
+            Text("Identify user")
         }
 
-        if (viewModel.sdkState is OSTState.Error) {
-            val error = (viewModel.sdkState as OSTState.Error).message
+        val state = viewModel.sdkState
+        if (state is OSTIdentificationState.Lost) {
             Text(
-                text = "Initialization Error: $error",
+                text = "Session lost: ${state.cause.message}",
                 modifier = Modifier
                     .padding(16.dp)
                     .align(Alignment.CenterHorizontally),

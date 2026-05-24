@@ -22,6 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.onestep.android.core.OneStep
+import co.onestep.android.core.getOr
+import co.onestep.android.core.monitoring.getMonitoring
 import com.onestep.backgroundmonitoringsample.ui.model.ActivityItem
 import com.onestep.backgroundmonitoringsample.ui.model.ActivityItemUI
 
@@ -30,7 +32,9 @@ fun RecordsListScreen() {
     var items by remember { mutableStateOf(emptyList<ActivityItem>()) }
 
     LaunchedEffect(Unit) {
-        items = OneStep.monitoring.getDailySummaries()
+        val oneStep = OneStep.getInstance().getOr(null) ?: return@LaunchedEffect
+        val monitoring = oneStep.getMonitoring().getOr(null) ?: return@LaunchedEffect
+        items = monitoring.getDailySummaries().getOr(emptyList())
             .map(ActivityItem::fromDailySummary)
             .sortedByDescending { it.startTime }
     }

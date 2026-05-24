@@ -19,7 +19,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
-import co.onestep.android.core.OneStep
 import co.onestep.android.uikit.features.carlog.presentation.OSTCarelogActivity
 import co.onestep.android.uikit.features.permissions.OSTPermissionFlowActivity
 import co.onestep.android.uikit.features.recordFlow.configurations.OSTRecordingConfiguration
@@ -98,8 +97,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun collectSDKState() {
+        val app = application as UiKitSampleApplication
         lifecycleScope.launch {
-            OneStep.state.collect { state ->
+            app.oneStepSdk.identificationState.collect { state ->
                 viewModel.sdkState = state
                 viewModel.isConnecting = false
             }
@@ -109,7 +109,7 @@ class MainActivity : AppCompatActivity() {
     private fun connect() {
         viewModel.isConnecting = true
         lifecycleScope.launch {
-            (application as UiKitSampleApplication).initializeSdk()
+            (application as UiKitSampleApplication).connectUser()
         }
     }
 }

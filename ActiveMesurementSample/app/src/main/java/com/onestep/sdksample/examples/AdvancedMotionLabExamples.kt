@@ -17,13 +17,15 @@ import co.onestep.android.core.OSTActivityType
 import co.onestep.android.core.OSTParamName
 import co.onestep.android.core.OSTResult
 import co.onestep.android.core.OneStep
+import co.onestep.android.core.getOr
 import co.onestep.android.core.insights.OSTNorm
 import co.onestep.android.core.insights.OSTNormPart
 import co.onestep.android.core.insights.OSTParameterMetadata
+import co.onestep.android.core.insights.getInsights
 import co.onestep.android.core.motionLab.OSTMotionMeasurement
 import co.onestep.android.core.motionLab.OSTResultState
 import co.onestep.android.core.motionLab.OSTTimeRangeFilter
-import co.onestep.android.core.motionLab.OSTTimeRangedDataRequest
+import co.onestep.android.core.motionLab.getMotionLab
 import java.util.Calendar
 
 private const val TAG = "MotionLabExamples"
@@ -35,7 +37,9 @@ private const val TAG = "MotionLabExamples"
  * and explanatory text rather than raw parameter values.
  */
 suspend fun enrichWithInsightsAndNorms(measurement: OSTMotionMeasurement) {
-    val motionService = OneStep.insights.getMotionDataService()
+    val oneStep = OneStep.getInstance().getOr(null) ?: return
+    val insightsProduct = oneStep.getInsights().getOr(null) ?: return
+    val motionService = insightsProduct.getMotionDataService().getOr(null) ?: return
 
     // For each parameter you care about, look up its metadata and compare the value
     // to the clinical norm.
@@ -55,7 +59,7 @@ suspend fun enrichWithInsightsAndNorms(measurement: OSTMotionMeasurement) {
     }
 
     // Fetch AI-generated insights (markdown summaries) for the measurement.
-    when (val insights = OneStep.insights.getMeasurementInsights(measurement.id)) {
+    when (val insights = insightsProduct.getMeasurementInsights(measurement.id)) {
         is OSTResult.Success -> {
             insights.data.insights.take(3).forEach { insight ->
                 Log.d(
@@ -68,7 +72,7 @@ suspend fun enrichWithInsightsAndNorms(measurement: OSTMotionMeasurement) {
             }
         }
         is OSTResult.Error -> {
-            Log.e(TAG, "Failed to fetch insights: ${insights.error} - ${insights.message}")
+            Log.e(TAG, "Failed to fetch insights: ${insights.cause.type} - ${insights.cause.message}")
         }
     }
 }
@@ -80,7 +84,9 @@ suspend fun enrichWithInsightsAndNorms(measurement: OSTMotionMeasurement) {
  * which is what you need for a "red / yellow / green" UI gauge.
  */
 suspend fun fetchNormsAndMetadata(measurement: OSTMotionMeasurement) {
-    val motionService = OneStep.insights.getMotionDataService()
+    val oneStep = OneStep.getInstance().getOr(null) ?: return
+    val motionService = oneStep.getInsights().getOr(null)
+        ?.getMotionDataService()?.getOr(null) ?: return
 
     val norms: List<OSTNorm> = measurement.params.mapNotNull {
         motionService.getNormByName(it.key)
@@ -110,6 +116,9 @@ suspend fun fetchNormsAndMetadata(measurement: OSTMotionMeasurement) {
  * trend widgets ("today" vs "past week" vs "baseline").
  */
 suspend fun weeklyAverageWalkScore() {
+    val oneStep = OneStep.getInstance().getOr(null) ?: return
+    val motionLab = oneStep.getMotionLab().getOr(null) ?: return
+
     val startOfWeek = Calendar.getInstance().apply {
         set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
         set(Calendar.HOUR_OF_DAY, 0)
@@ -118,11 +127,9 @@ suspend fun weeklyAverageWalkScore() {
         set(Calendar.MILLISECOND, 0)
     }.timeInMillis
 
-    val records = OneStep.motionLab.readMotionMeasurements(
-        request = OSTTimeRangedDataRequest(
-            timeRangeFilter = OSTTimeRangeFilter.after(startOfWeek),
-        ),
-    )
+    val records = motionLab.readMotionMeasurements {
+        timeRangeFilter = OSTTimeRangeFilter.after(startOfWeek)
+    }.getOr(emptyList())
         .filter { it.type == OSTActivityType.WALK }
         .filter { it.resultState == OSTResultState.FULL_ANALYSIS }
 
