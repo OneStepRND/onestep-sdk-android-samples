@@ -4,12 +4,15 @@ import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Create
@@ -18,14 +21,17 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.onestep.android.core.OneStep
@@ -34,13 +40,16 @@ import co.onestep.android.core.monitoring.OSTMonitoringPreference
 import co.onestep.android.core.monitoring.OSTMonitoringRuntimeState
 import com.onestep.backgroundmonitoringsample.components.SafeSDKButton
 import com.onestep.backgroundmonitoringsample.ui.model.MonitoringUiState
+import com.onestep.backgroundmonitoringsample.ui.model.NotificationStyle
 import kotlinx.coroutines.launch
 
 @Composable
 fun MonitoringScreen(
     monitoringState: MonitoringUiState,
+    notificationStyle: NotificationStyle,
     onOptIn: () -> Unit,
     onOptOut: () -> Unit,
+    onSelectNotificationStyle: (NotificationStyle) -> Unit,
     onShowRecords: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -80,6 +89,13 @@ fun MonitoringScreen(
                 color = Color(0xFF4678B4),
             )
         }
+        Spacer(modifier = Modifier.height(32.dp))
+        HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+        NotificationStyleSection(
+            selected = notificationStyle,
+            onSelect = onSelectNotificationStyle,
+        )
         Spacer(modifier = Modifier.height(32.dp))
         HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
         Spacer(modifier = Modifier.height(32.dp))
@@ -133,4 +149,84 @@ private fun ScreenTitle(
                 .then(modifier),
         )
     }
+}
+
+/**
+ * Lets the user switch the foreground-service notification style at runtime. Selecting an option
+ * calls back into the SDK via the ViewModel; if monitoring is active the live notification updates
+ * in place. Demonstrates the three OSTNotificationConfigScope builders (default / custom / native).
+ */
+@Composable
+private fun NotificationStyleSection(
+    selected: NotificationStyle,
+    onSelect: (NotificationStyle) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ScreenTitle(text = "Notification Style")
+        Text(
+            text = "How the ongoing background-monitoring notification is rendered.",
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        NotificationStyle.entries.forEach { style ->
+            NotificationStyleOption(
+                style = style,
+                isSelected = style == selected,
+                onSelect = { onSelect(style) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun NotificationStyleOption(
+    style: NotificationStyle,
+    isSelected: Boolean,
+    onSelect: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(selected = isSelected, onClick = onSelect)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = isSelected, onClick = onSelect)
+        Spacer(modifier = Modifier.width(8.dp))
+        Column {
+            Text(
+                text = style.label,
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Text(
+                text = style.description,
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MonitoringScreenPreview() {
+    MonitoringScreen(
+        monitoringState = MonitoringUiState(),
+        notificationStyle = NotificationStyle.DEFAULT,
+        onOptIn = {},
+        onOptOut = {},
+        onSelectNotificationStyle = {},
+        onShowRecords = {},
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun NotificationStyleSectionPreview() {
+    NotificationStyleSection(
+        selected = NotificationStyle.CUSTOM,
+        onSelect = {},
+    )
 }

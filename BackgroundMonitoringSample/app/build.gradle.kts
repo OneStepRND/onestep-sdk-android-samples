@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
 }
+
+// Load OneStep credentials from the gitignored local.properties so no keys live in source.
+// Missing keys fall back to empty strings, so the project still compiles on a fresh clone.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+fun localProperty(key: String): String = localProperties.getProperty(key, "")
 
 android {
     namespace = "com.onestep.backgroundmonitoringsample"
@@ -19,6 +29,11 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // OneStep credentials sourced from local.properties (never committed).
+        buildConfigField("String", "ONESTEP_CLIENT_TOKEN", "\"${localProperty("onestep.clientToken")}\"")
+        buildConfigField("String", "ONESTEP_CUSTOMER_PATIENT_ID", "\"${localProperty("onestep.customerPatientId")}\"")
+        buildConfigField("String", "ONESTEP_IDENTITY_VERIFICATION", "\"${localProperty("onestep.identityVerification")}\"")
     }
 
     buildTypes {
@@ -39,6 +54,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"

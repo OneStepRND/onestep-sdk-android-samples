@@ -8,6 +8,7 @@ import co.onestep.android.core.monitoring.getMonitoring
 import co.onestep.android.core.onError
 import co.onestep.android.core.onSuccess
 import com.onestep.backgroundmonitoringsample.analytics.EventsCollector
+import com.onestep.backgroundmonitoringsample.notifications.MonitoringNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -41,24 +42,28 @@ class BgMonitoringSampleApplication : Application() {
     }
 
     private suspend fun identifyAndStartMonitoring(oneStep: OneStep) {
-        // Step 2: Identify user
+        // Step 2: Identify user. Credentials come from local.properties via BuildConfig, so no
+        // keys live in source. identityVerification is the precomputed HMAC digest (or blank);
+        // pass null when blank to connect without identity verification.
         oneStep.setPatient(
-            apiKey = "<YOUR-CLIENT-TOKEN-HERE>",
-            customerPatientId = "<A-UUID-FOR-CURRENT-USER-HERE>",
-            identityVerification = null, // <YOUR-IDENTITY-VERIFICATION-SECRET-HERE>
+            apiKey = BuildConfig.ONESTEP_CLIENT_TOKEN,
+            customerPatientId = BuildConfig.ONESTEP_CUSTOMER_PATIENT_ID,
+            identityVerification = BuildConfig.ONESTEP_IDENTITY_VERIFICATION.ifBlank { null },
         ).onSuccess {
             Log.d(TAG, "SDK identified successfully")
             val monitoring = oneStep.getMonitoring().getOr(null) ?: return@onSuccess
-            // Step 3: Initialize monitoring
+            // Step 3: Enable monitoring. enable() wires up the monitoring subsystem for this
+            // session; it does NOT start collecting on its own. The user must then OPT IN
+            // (monitoring.optIn(), called from MainViewModel after permissions are granted) to
+            // actually begin background collection, and can optOut() to stop. Think of it as:
+            // enable = "make the feature available", optIn/optOut = "the user's consent toggle".
+            // Docs: https://glorious-caboc-cd3.notion.site/onestep-collect-for-android
             monitoring.enable()
-            // Step 4: Set notification
-            monitoring.setCustomMonitoringNotification {
-                default(
-                    icon = R.drawable.ic_launcher_foreground,
-                    title = { "This is the Sample App monitoring" },
-                    text = null,
-                )
-            }
+            // Step 4: Set the foreground-service notification. We re-apply the user's last choice
+            // (default on first run) so the live notification matches the in-app picker after an
+            // app restart. All three styles are built in MonitoringNotifications so the startup and
+            // in-app paths stay in sync.
+            MonitoringNotifications.apply(monitoring, this, MonitoringNotifications.savedStyle(this))
         }.onError { error ->
             Log.e(TAG, "SDK setPatient failed: ${error.cause.message}")
         }
