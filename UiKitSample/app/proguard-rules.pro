@@ -20,11 +20,14 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-# OneStepSDK
--keep class co.onestep.android.core.** { *; }
--keep interface co.onestep.android.core.** { *; }
--keep class co.onestep.android.uikit.** { *; }
--keep interface co.onestep.android.uikit.** { *; }
--keepclassmembernames class * {
-    public void log*(...);
-}
+# --- OneStep SDK / UIKit ---
+# No app-side keep rules are needed: the OneStep core and uikit AARs ship their own *consumer*
+# ProGuard rules, which R8 applies automatically. Avoid blanket
+# `-keep class co.onestep.android.** { *; }` rules — they disable R8 shrinking/optimization for the
+# whole SDK and bloat your APK. If a release build fails, add the narrowest keep for the specific
+# class R8 reports, not a package wildcard.
+#
+# kotlin-parcelize's @Parcelize is a compile-time annotation referenced by the UIKit AAR but absent
+# at runtime; R8 full mode escalates that missing-class warning to an error. This is the one narrow
+# rule R8 asks for (see build/outputs/mapping/release/missing_rules.txt) — not a keep.
+-dontwarn kotlinx.parcelize.**

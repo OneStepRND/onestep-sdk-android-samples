@@ -39,10 +39,13 @@ class UiKitSampleApplication : Application() {
     }
 
     suspend fun connectUser() {
+        // Credentials come from local.properties via BuildConfig, so no keys live in source.
+        // identityVerification is the precomputed HMAC digest of customerPatientId (or blank);
+        // pass null when blank to connect without identity verification. See the README "API Keys".
         oneStepSdk.setPatient(
-            apiKey = "<YOUR_CLIENT_TOKEN_HERE>",
-            customerPatientId = "<YOUR_IDENTITY_HERE>",
-            identityVerification = null,
+            apiKey = BuildConfig.CLIENT_TOKEN,
+            customerPatientId = BuildConfig.CUSTOMER_PATIENT_ID,
+            identityVerification = BuildConfig.IDENTITY_VERIFICATION.ifBlank { null },
             userAttributes = {
                 withAge(60)
                 withSex(OSTUserAttributes.Sex.FEMALE)

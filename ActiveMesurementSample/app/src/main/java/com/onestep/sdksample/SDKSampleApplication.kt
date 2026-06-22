@@ -37,10 +37,13 @@ class SDKSampleApplication : Application() {
 
     suspend fun connectUser() {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        // Credentials come from local.properties via BuildConfig, so no keys live in source.
+        // identityVerification is the precomputed HMAC digest of customerPatientId (or blank);
+        // pass null when blank to connect without identity verification. See the README "Keys".
         oneStepSdk.setPatient(
-            apiKey = "<YOUR-CLIENT-TOKEN>",
-            customerPatientId = "<YOUR-USER-DISTINCT-ID>",
-            identityVerification = null,
+            apiKey = BuildConfig.CLIENT_TOKEN,
+            customerPatientId = BuildConfig.CUSTOMER_PATIENT_ID,
+            identityVerification = BuildConfig.IDENTITY_VERIFICATION.ifBlank { null },
             userAttributes = {
                 withFirstName("John")
                 withLastName("Doe")

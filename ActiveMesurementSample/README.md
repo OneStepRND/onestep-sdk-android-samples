@@ -8,6 +8,10 @@
 
 ActiveMesurementSample is an app demonstrarting the OneStep core SDK collecting sensor data and analyzing it to produce a walk score, quantifying the nuances of walking patterns.
 
+## Documentation
+
+📖 **[OneStep Collect for Android — full documentation](https://glorious-caboc-cd3.notion.site/onestep-collect-for-android)** — SDK setup, identity verification, measurements, and more.
+
 ## Features
 
 - Recording motion data
@@ -21,13 +25,14 @@ ActiveMesurementSample is an app demonstrarting the OneStep core SDK collecting 
 | Component | Version |
 |---|---|
 | Android API (min) | 26 |
-| Android API (target / compile) | 35 |
-| Android Gradle Plugin | 9.0.0 |
-| Kotlin | 2.2.10 |
-| Compose BOM | 2024.09.02 |
+| Android API (target / compile) | 34 / 36 |
+| Android Gradle Plugin | 8.9.2 |
+| Kotlin | 2.0.21 |
+| Compose BOM | 2025.04.01 |
 | OneStep SDK (core) | 2.0.0 |
 
-Toolchain versions mirror `UiKitSample/gradle/libs.versions.toml`. If the live build at `app/build.gradle.kts` is temporarily ahead (e.g. `compileSdk=36` after an AGP bump), the canonical reference still wins for new sample apps.
+These values come from this module's `gradle/libs.versions.toml` and `app/build.gradle.kts` — the
+source of truth for what builds. Update them together if you bump versions.
 
 ### Installation
 
@@ -36,7 +41,26 @@ Make sure you run this sample app on an actual device to use the motion sensors 
 
 ### Keys
 
-To initilize this app you need to obtain specific API-KEY, reach out to `shahar@onestep.co` for more details and access to the SDK.
+To initialize this app you need a OneStep client token (and optionally an identity-verification
+secret). Reach out to `shahar@onestep.co` for access to the SDK and credentials.
+
+Credentials are **never stored in source** — they are read from `local.properties` (gitignored) and
+exposed via `BuildConfig` at build time. Add these lines to `local.properties`:
+
+```properties
+onestep.clientToken=<YOUR-CLIENT-TOKEN>
+onestep.customerPatientId=<YOUR-USER-DISTINCT-ID>
+# Precomputed identity-verification digest (leave blank to skip identity verification):
+onestep.identityVerification=<HMAC-DIGEST>
+```
+
+`onestep.identityVerification` is **not** the secret — it is the hex-encoded
+`HMAC_SHA256(key = <identity-verification secret>, message = <customerPatientId>)`, computed on your
+server (the secret must never ship in the app). For local testing:
+
+```bash
+printf '%s' "<customerPatientId>" | openssl dgst -sha256 -hmac "<SECRET>" -hex
+```
 
 ## Support
 

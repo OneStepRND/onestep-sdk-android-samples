@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# --- OneStep SDK ---
+# No app-side keep rules are needed: the OneStep SDK AAR ships its own *consumer* ProGuard rules,
+# which R8 applies automatically. Avoid a blanket `-keep class co.onestep.android.**` — it disables
+# R8 shrinking/optimization for the whole SDK. If a release build fails, add the narrowest keep for
+# the specific class R8 reports, not a package wildcard.

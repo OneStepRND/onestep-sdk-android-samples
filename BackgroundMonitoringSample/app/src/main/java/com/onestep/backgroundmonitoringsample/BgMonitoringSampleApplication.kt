@@ -46,9 +46,9 @@ class BgMonitoringSampleApplication : Application() {
         // keys live in source. identityVerification is the precomputed HMAC digest (or blank);
         // pass null when blank to connect without identity verification.
         oneStep.setPatient(
-            apiKey = BuildConfig.ONESTEP_CLIENT_TOKEN,
-            customerPatientId = BuildConfig.ONESTEP_CUSTOMER_PATIENT_ID,
-            identityVerification = BuildConfig.ONESTEP_IDENTITY_VERIFICATION.ifBlank { null },
+            apiKey = BuildConfig.CLIENT_TOKEN,
+            customerPatientId = BuildConfig.CUSTOMER_PATIENT_ID,
+            identityVerification = BuildConfig.IDENTITY_VERIFICATION.ifBlank { null },
         ).onSuccess {
             Log.d(TAG, "SDK identified successfully")
             val monitoring = oneStep.getMonitoring().getOr(null) ?: return@onSuccess
