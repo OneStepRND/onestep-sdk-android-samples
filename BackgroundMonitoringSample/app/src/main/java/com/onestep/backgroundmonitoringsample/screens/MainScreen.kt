@@ -24,6 +24,7 @@ import com.onestep.backgroundmonitoringsample.viewmodels.MainViewModel
 @OptIn(ExperimentalPermissionsApi::class)
 fun MainScreen(viewModel: MainViewModel) {
     val monitoringState = viewModel.monitoringUiState.collectAsState()
+    val notificationStyle = viewModel.notificationStyle.collectAsState()
     val screenState = viewModel.screenState
 
     // Permission for activity recognition is required to use the SDK
@@ -75,15 +76,23 @@ fun MainScreen(viewModel: MainViewModel) {
             is ScreenState.Initialized -> {
                 MonitoringScreen(
                     monitoringState = monitoringState.value,
+                    notificationStyle = notificationStyle.value,
                     onOptIn = { viewModel.optInToMonitoring() },
                     onOptOut = { viewModel.optOutOfMonitoring() },
+                    onSelectNotificationStyle = { style ->
+                        viewModel.setNotificationStyle(style)
+                    },
                     onShowRecords = {
                         viewModel.setState(ScreenState.Records)
                     },
                 )
             }
 
-            is ScreenState.Records -> RecordsListScreen()
+            is ScreenState.Records -> {
+                val records = viewModel.records.collectAsState()
+                LaunchedEffect(Unit) { viewModel.loadRecords() }
+                RecordsListScreen(items = records.value)
+            }
         }
     }
 }
