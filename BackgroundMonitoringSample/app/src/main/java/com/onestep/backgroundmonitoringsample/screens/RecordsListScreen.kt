@@ -11,34 +11,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import co.onestep.android.core.OneStep
-import co.onestep.android.core.getOr
-import co.onestep.android.core.monitoring.getMonitoring
 import com.onestep.backgroundmonitoringsample.ui.model.ActivityItem
 import com.onestep.backgroundmonitoringsample.ui.model.ActivityItemUI
 
 @Composable
-fun RecordsListScreen() {
-    var items by remember { mutableStateOf(emptyList<ActivityItem>()) }
-
-    LaunchedEffect(Unit) {
-        val oneStep = OneStep.getInstance().getOr(null) ?: return@LaunchedEffect
-        val monitoring = oneStep.getMonitoring().getOr(null) ?: return@LaunchedEffect
-        items = monitoring.getDailySummaries().getOr(emptyList())
-            .map(ActivityItem::fromDailySummary)
-            .sortedByDescending { it.startTime }
-    }
-
+fun RecordsListScreen(items: List<ActivityItem>) {
     if (items.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(text = "Your care log is empty")
@@ -63,4 +46,19 @@ fun RecordsListScreen() {
             items(items) { ActivityItemUI(activityItem = it) }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RecordsListScreenPreview() {
+    RecordsListScreen(
+        items = listOf(
+            ActivityItem(
+                uuid = "1",
+                title = "2026-06-22 - 5,231 steps",
+                startTime = "2026-06-22",
+                details = mapOf("Date" to "2026-06-22", "Total Steps" to "5231"),
+            ),
+        ),
+    )
 }
