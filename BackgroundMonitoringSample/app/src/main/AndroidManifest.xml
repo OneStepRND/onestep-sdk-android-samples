@@ -2,7 +2,26 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.CAMERA" />
+    <!--
+        Runtime ("dangerous") permissions the host app must request at runtime (see MainScreen).
+        ACTIVITY_RECOGNITION is required for step/movement detection; POST_NOTIFICATIONS (API 33+)
+        is required to show the foreground-service notification.
+    -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!--
+        The OneStep SDK contributes the rest of its required permissions via manifest merging, so
+        you do NOT need to declare them yourself. They are listed here for awareness because some
+        are privacy-sensitive and must be reflected in your Play Store Data safety form:
+          • FOREGROUND_SERVICE, FOREGROUND_SERVICE_HEALTH  – the always-on monitoring service
+          • FOREGROUND_SERVICE_MICROPHONE, RECORD_AUDIO    – audio-based motion sensing
+          • ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION   – location context
+          • INTERNET, ACCESS_NETWORK_STATE                 – syncing data
+          • RECEIVE_BOOT_COMPLETED                         – restart monitoring after reboot
+          • REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, WAKE_LOCK – background reliability
+        Inspect the merged manifest (Android Studio → Merged Manifest) for the authoritative list.
+    -->
 
     <application
         android:allowBackup="true"

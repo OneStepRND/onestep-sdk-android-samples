@@ -20,10 +20,8 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-# - OneStepSDK
--keep class co.onestep.android.core.** { *; }
--keep interface co.onestep.android.core.** { *; }
--keepattributes *Annotation*
--keepclassmembernames class * {
-    public void log*(...);
-}
+# --- OneStep SDK ---
+# No app-side keep rules are needed: the OneStep SDK AAR ships its own *consumer* ProGuard rules,
+# which R8 applies automatically. Do NOT add a blanket `-keep class co.onestep.android.core.** { *; }`
+# — it disables R8 optimization/shrinking for the whole SDK and bloats your APK. If a release build
+# ever fails, add the narrowest keep for the specific class R8 reports, not a package wildcard.
