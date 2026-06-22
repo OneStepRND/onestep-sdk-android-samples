@@ -31,9 +31,9 @@ android {
         }
 
         // OneStep credentials sourced from local.properties (never committed).
-        buildConfigField("String", "ONESTEP_CLIENT_TOKEN", "\"${localProperty("onestep.clientToken")}\"")
-        buildConfigField("String", "ONESTEP_CUSTOMER_PATIENT_ID", "\"${localProperty("onestep.customerPatientId")}\"")
-        buildConfigField("String", "ONESTEP_IDENTITY_VERIFICATION", "\"${localProperty("onestep.identityVerification")}\"")
+        buildConfigField("String", "CLIENT_TOKEN", "\"${localProperty("onestep.clientToken")}\"")
+        buildConfigField("String", "CUSTOMER_PATIENT_ID", "\"${localProperty("onestep.customerPatientId")}\"")
+        buildConfigField("String", "IDENTITY_VERIFICATION", "\"${localProperty("onestep.identityVerification")}\"")
     }
 
     buildTypes {

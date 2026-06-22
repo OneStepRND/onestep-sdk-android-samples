@@ -2,6 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Runtime ("dangerous") permission the host app requests (see MainScreen): required for
+         step/movement detection during a recording. -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
+    <!-- The OneStep SDK contributes its other required permissions via manifest merging, so you do
+         not declare them yourself. Some are privacy-sensitive (e.g. microphone/audio and location
+         used for motion sensing) and must be reflected in your Play Store Data safety form. Open
+         Android Studio → Merged Manifest for the authoritative list. -->
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
