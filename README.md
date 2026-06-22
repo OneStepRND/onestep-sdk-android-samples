@@ -3,10 +3,24 @@
 ## Versioning
 
 ![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)
-![Core](https://img.shields.io/badge/core-2.0.0--RC1-red.svg)
-![UiKit](https://img.shields.io/badge/uikit-2.0.0--RC1-blue.svg)
+![Core](https://img.shields.io/badge/core-2.0.0-red.svg)
+![UiKit](https://img.shields.io/badge/uikit-2.0.0-blue.svg)
 
 This repository contains sample Android applications demonstrating how to integrate and use the OneStep SDK for motion analysis. The apps showcase how to record motion data, analyze it, and display the results within your own application.
+
+📖 **Full documentation:** [OneStep Collect for Android](https://glorious-caboc-cd3.notion.site/onestep-collect-for-android)
+
+## Samples in this repo
+
+Each sample is a standalone Gradle project with its own README (setup, keys, and what it demonstrates):
+
+| Sample | Demonstrates |
+|---|---|
+| [`ActiveMesurementSample`](ActiveMesurementSample/README.md) | On-demand ("active") measurement — record a walk and get a walk score. |
+| [`BackgroundMonitoringSample`](BackgroundMonitoringSample/README.md) | Background activity monitoring, daily summaries, and foreground-service notification styles. |
+| [`UiKitSample`](UiKitSample/README.md) | Drop-in OneStep **UIKit** screens (recording flow, summary, carelog, permission flow). |
+
+All three follow the same setup pattern: credentials live in a gitignored `local.properties` and are exposed via `BuildConfig` (see each sample's README), so no keys are committed.
 
 ## Features
 
@@ -28,7 +42,7 @@ The OneStep SDK is currently available exclusively to our customers. We provide 
 | Android Gradle Plugin | 9.0.0 |
 | Kotlin | 2.2.10 |
 | Compose BOM | 2024.09.02 |
-| OneStep SDK (core / uikit) | 2.0.0-RC1 |
+| OneStep SDK (core / uikit) | 2.0.0 |
 
 Toolchain versions mirror `UiKitSample/gradle/libs.versions.toml`, the canonical reference for sample apps in this repo. Bump versions there first, then propagate.
 
@@ -61,7 +75,10 @@ class MyApplication : Application() {
         oneStepSdk.setPatient(
             apiKey = "<YOUR-CLIENT-TOKEN>",
             customerPatientId = "<YOUR-USER-DISTINCT-ID>",
-            identityVerification = "<YOUR-IDENTITY-VERIFICATION-SECRET>", // or null in development
+            // NOT the secret — the hex HMAC_SHA256(secret, customerPatientId) digest, computed
+            // server-side. Pass null to skip identity verification. (In the samples this comes
+            // from local.properties via BuildConfig.)
+            identityVerification = null,
             userAttributes = {
                 // Optional — set atomically with identification
                 withSex(OSTUserAttributes.Sex.MALE)

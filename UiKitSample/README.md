@@ -52,12 +52,26 @@ This sample is the canonical toolchain reference for the repo — its `gradle/li
 
 ### API Keys
 
-Before integrating OneStep UIKit, you need to obtain your API credentials:
+Before integrating OneStep UIKit, obtain your API credentials from the OneStep back-office under
+Developers > Settings (reach out to `shahar@onestep.co` for access).
 
-- App ID: Your application's unique identifier provided by OneStep.
-- API Key: The API key associated with your OneStep account.
+This sample keeps credentials **out of source** — they are read from `local.properties` (gitignored)
+and exposed via `BuildConfig`. Add these lines to `local.properties`:
 
-You can retrieve these credentials from the OneStep back-office under Developers > Settings.
+```properties
+onestep.clientToken=<YOUR-CLIENT-TOKEN>
+onestep.customerPatientId=<YOUR-USER-DISTINCT-ID>
+# Precomputed identity-verification digest (leave blank to skip identity verification):
+onestep.identityVerification=<HMAC-DIGEST>
+```
+
+`onestep.identityVerification` is **not** the secret — it is the hex-encoded
+`HMAC_SHA256(key = <identity-verification secret>, message = <customerPatientId>)`, computed on your
+server (the secret must never ship in the app). For local testing:
+
+```bash
+printf '%s' "<customerPatientId>" | openssl dgst -sha256 -hmac "<SECRET>" -hex
+```
 
 ## Getting started
 
@@ -67,22 +81,22 @@ Our sample app has all the core features of OneStep UIKit for Android. Download 
 
 ### Use your client token
 
-Initialize the SDK once (typically in your `Application.onCreate`), then identify the current user. `identify` is a suspend function and returns an `OSTResult<Unit>` you should branch on.
+Initialize the SDK once in `Application.onCreate`, then identify the current user. `setPatient` is a
+suspend function returning an `OSTResult<Unit>` you should branch on (see `UiKitSampleApplication`).
 
 ```kotlin
+// 1. Initialize once in Application.onCreate()
 OneStep.initialize(
     application = this,
-    clientToken = "<YOUR-CLIENT-TOKEN>",
-)
-
-val result = OneStep.identify(
-    userId = "<YOUR-USER-DISTINCT-ID>",
-    identityVerification = "<YOUR-IDENTITY-VERIFICATION-SECRET>", // or null in development
-)
-
-when (result) {
-    is OSTResult.Success -> { /* SDK ready */ }
-    is OSTResult.Error -> Log.e("OneStep", "identify failed: ${result.error} - ${result.message}")
+    onAuthLost = { error -> Log.w("OneStep", "Auth lost: ${error.message}") },
+).onSuccess { oneStep ->
+    // 2. Identify the user (call from a coroutine — setPatient is suspend).
+    //    Credentials come from BuildConfig, sourced from local.properties.
+    oneStep.setPatient(
+        apiKey = BuildConfig.CLIENT_TOKEN,
+        customerPatientId = BuildConfig.CUSTOMER_PATIENT_ID,
+        identityVerification = BuildConfig.IDENTITY_VERIFICATION.ifBlank { null },
+    ).onError { error -> Log.e("OneStep", "identify failed: ${error.cause.message}") }
 }
 ```
 

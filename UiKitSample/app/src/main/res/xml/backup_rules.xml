@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <!-- Exclude the cache directory from backups -->
-    <exclude domain="file" path="cache/" />
-
-    <!-- Exclude the database files from backups -->
-    <exclude domain="database" path="*" />
-
-    <!-- Include shared preferences in backups -->
+    <!-- With <include> present, only the listed paths are backed up; everything else (cache,
+         databases, etc.) is excluded by omission, so no <exclude> entries are needed. -->
     <include domain="sharedpref" path="*" />
-
-    <!-- Include files in the 'files' directory in backups -->
     <include domain="file" path="files/" />
 </full-backup-content>
