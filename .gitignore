@@ -38,6 +38,14 @@ render.experimental.xml
 # Keystore files
 *.jks
 *.keystore
+*.p12
+
+# Credentials: never commit them. Each sample reads its keys from the gitignored local.properties
+# (see local.properties.example). These patterns catch other common places a key could end up.
+.env
+.env.*
+*.secrets
+secrets.properties
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
