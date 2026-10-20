@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
                     isConnecting = viewModel.isConnecting,
                     isIdentified = sdkState is OSTIdentificationState.Identified,
                     sessionLostMessage = (sdkState as? OSTIdentificationState.Lost)
-                        ?.let { "Session lost: ${it.cause.message}" },
+                        ?.let { "Session lost: ${it.cause.type.name}" },
                     connect = {
                         coroutineScope.launch {
                             viewModel.isConnecting = true

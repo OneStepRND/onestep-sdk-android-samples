@@ -188,7 +188,7 @@ class RecorderViewModel : ViewModel() {
                 // records nothing, so always check the result. Typical error.cause.type values:
                 // MissingPermission (ACTIVITY_RECOGNITION on Android 14+) and InvalidArgument
                 // (duration over RECORDER_LIMIT_MILLIS).
-                startError.value = "Could not start: ${error.cause.type} - ${error.cause.message}"
+                startError.value = "Could not start: ${error.cause.type.name}"
                 // Release the service prepareForRecording() started. Otherwise its notification
                 // stays up for up to 60 seconds although nothing is recording.
                 motionLab.reset()
