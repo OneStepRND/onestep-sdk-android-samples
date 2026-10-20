@@ -53,7 +53,7 @@ From a sample folder, with JDK 17 or newer:
 ```
 
 The build works with no `local.properties`: credential fields are then empty strings. Each sample
-then shows a setup screen at launch that names the missing keys (and logs only the key names),
+then shows a setup screen at launch that names the missing keys (and never logs their values),
 instead of failing later. A real recording needs a physical device; the emulator has no motion
 sensors.
 
