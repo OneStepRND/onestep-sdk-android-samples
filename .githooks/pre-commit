@@ -1,0 +1,9 @@
+#!/bin/sh
+# Blocks a commit that adds a credential. Enable once per clone:
+#   git config core.hooksPath .githooks
+# Needs gitleaks on PATH (https://github.com/gitleaks/gitleaks#installing).
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks is not installed; skipping the credential scan." >&2
+  exit 0
+fi
+exec gitleaks git --pre-commit --staged --redact --no-banner --config .gitleaks.toml
