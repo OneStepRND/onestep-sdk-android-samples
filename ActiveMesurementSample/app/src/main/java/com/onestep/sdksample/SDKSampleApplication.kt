@@ -4,6 +4,8 @@ import android.app.Application
 import android.util.Log
 import co.onestep.android.core.OSTUserAttributes
 import co.onestep.android.core.OneStep
+import co.onestep.android.core.getOr
+import co.onestep.android.core.motionLab.getMotionLab
 import co.onestep.android.core.onError
 import co.onestep.android.core.onSuccess
 import kotlinx.coroutines.CoroutineScope
@@ -30,8 +32,33 @@ class SDKSampleApplication : Application() {
         ).onSuccess { oneStep ->
             oneStepSdk = oneStep
             EventsCollector.startCollecting(oneStep, applicationScope)
+            configureRecordingNotification(oneStep)
         }.onError { error ->
             Log.e(TAG, "SDK initialize failed: ${error.cause.message}")
+        }
+    }
+
+    /**
+     * A recording runs in a foreground service, so Android shows a notification while it lasts.
+     * Brand it with your own icon and copy (SDK 2.2.0+).
+     *
+     * MotionLab is available only once a patient is identified, so call this after setPatient()
+     * succeeds, and again in Application.onCreate() for a patient restored from a previous run
+     * (the recorder can restart in a process where none of your other code has run).
+     */
+    private fun configureRecordingNotification(oneStep: OneStep) {
+        val motionLab = oneStep.getMotionLab().getOr(null) ?: run {
+            Log.d(TAG, "MotionLab not available yet; recording notification set after setPatient")
+            return
+        }
+        motionLab.setCustomRecordingNotification {
+            default(
+                icon = R.drawable.ic_launcher_foreground,
+                title = { getString(R.string.recording_notification_title) },
+                text = { getString(R.string.recording_notification_text) },
+            )
+        }.onError { error ->
+            Log.w(TAG, "setCustomRecordingNotification failed: ${error.cause.message}")
         }
     }
 
@@ -52,6 +79,7 @@ class SDKSampleApplication : Application() {
             },
         ).onSuccess {
             Log.d(TAG, "SDK identified successfully")
+            configureRecordingNotification(oneStepSdk)
         }.onError { error ->
             Log.e(TAG, "SDK setPatient failed: ${error.cause.message}")
         }

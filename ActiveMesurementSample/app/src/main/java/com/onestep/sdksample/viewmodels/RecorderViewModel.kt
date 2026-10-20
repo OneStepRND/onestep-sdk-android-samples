@@ -13,9 +13,18 @@ import co.onestep.android.core.motionLab.OSTMotionMeasurement
 import co.onestep.android.core.motionLab.OSTRecorderState
 import co.onestep.android.core.motionLab.OSTResultState
 import co.onestep.android.core.motionLab.getMotionLab
+import co.onestep.android.core.onError
+import co.onestep.android.core.onSuccess
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
@@ -35,6 +44,13 @@ sealed interface RecorderUiState {
     data class Failed(val reason: String) : RecorderUiState
 }
 
+/** Live progress of the recording in flight, for the timer and step counter. */
+data class RecordingProgress(
+    val elapsedSeconds: Long,
+    val totalSeconds: Long,
+    val steps: Int,
+)
+
 class RecorderViewModel : ViewModel() {
 
     // The SDK is initialised in SDKSampleApplication.onCreate() so by the time this
@@ -45,8 +61,43 @@ class RecorderViewModel : ViewModel() {
     private val motionLab = oneStep.getMotionLab().getOr(null)
         ?: error("MotionLab unavailable")
 
+    // State driven by the SDK's recorder and analyser state machines.
     private val _state = MutableStateFlow<RecorderUiState>(RecorderUiState.Idle)
-    val state: StateFlow<RecorderUiState> = _state.asStateFlow()
+
+    // A refused start() is kept apart from the SDK-driven state: the reset() that releases the
+    // recording service emits INITIALIZED, which would otherwise overwrite the error with Idle.
+    private val startError = MutableStateFlow<String?>(null)
+
+    val state: StateFlow<RecorderUiState> = combine(_state, startError) { sdkState, error ->
+        error?.let { RecorderUiState.Failed(it) } ?: sdkState
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, RecorderUiState.Idle)
+
+    // The SDK owns the recording clock: currentRecordingWindow publishes when capture started and
+    // when it will auto-stop. Re-read it on every tick instead of counting seconds in the UI, so
+    // the timer never drifts from the recorder (screen-off, backgrounding, dropped frames). The
+    // ticker runs only while recording; the window is not cleared when a recording stops.
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val progress: StateFlow<RecordingProgress?> = motionLab.recorderState
+        .flatMapLatest { recorderState ->
+            if (recorderState != OSTRecorderState.RECORDING) return@flatMapLatest flowOf(null)
+            combine(motionLab.currentRecordingWindow, motionLab.stepsCount, ticker()) { window, steps, _ ->
+                window?.let {
+                    RecordingProgress(
+                        elapsedSeconds = it.elapsedMillis().coerceAtMost(it.totalMillis) / 1000,
+                        totalSeconds = it.totalMillis / 1000,
+                        steps = steps,
+                    )
+                }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    private fun ticker() = flow {
+        while (true) {
+            emit(Unit)
+            delay(TICK_MS)
+        }
+    }
 
     init {
         // Recorder state machine: INITIALIZED → RECORDING → FINALIZING → DONE
@@ -101,10 +152,20 @@ class RecorderViewModel : ViewModel() {
      *  - request ACTIVITY_RECOGNITION permission on Android 14+ (handled in MainScreen).
      */
     fun startRecording() {
-        // reset() clears any previous session so a fresh one can begin.
-        motionLab.reset()
-
+        startError.value = null
         viewModelScope.launch {
+            // reset() clears any previous session so a fresh one can begin.
+            motionLab.reset()
+
+            // Start the recording foreground service while the app is still in the foreground.
+            // On Android 14+ a foreground service cannot start from the background, so call this
+            // before start() (in a real app, during your countdown or "get ready" screen).
+            // It returns Success(false), not an error, when the app is already in the background.
+            motionLab.prepareForRecording(OSTActivityType.WALK)
+                .onSuccess { started ->
+                    if (!started) Log.w(TAG, "prepareForRecording: app not in foreground")
+                }
+
             motionLab.start(
                 activityType = OSTActivityType.WALK,
                 durationMillis = RECORDING_DURATION_MS,
@@ -122,7 +183,16 @@ class RecorderViewModel : ViewModel() {
                         "version" to 1.1,
                     )
                 },
-            )
+            ).onError { error ->
+                // Since SDK 2.3.0, start() returns an error instead of throwing. A refused start
+                // records nothing, so always check the result. Typical error.cause.type values:
+                // MissingPermission (ACTIVITY_RECOGNITION on Android 14+) and InvalidArgument
+                // (duration over RECORDER_LIMIT_MILLIS).
+                startError.value = "Could not start: ${error.cause.type} - ${error.cause.message}"
+                // Release the service prepareForRecording() started. Otherwise its notification
+                // stays up for up to 60 seconds although nothing is recording.
+                motionLab.reset()
+            }
         }
     }
 
@@ -169,5 +239,6 @@ class RecorderViewModel : ViewModel() {
         private val TAG = RecorderViewModel::class.simpleName ?: "RecorderViewModel"
         private const val RECORDING_DURATION_MS = 60_000L
         private const val ANALYZE_TIMEOUT_MS = 60_000L
+        private const val TICK_MS = 500L
     }
 }

@@ -3,11 +3,8 @@ package com.onestep.backgroundmonitoringsample.notifications
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import co.onestep.android.core.OSTResult
 import co.onestep.android.core.monitoring.OSTMonitoring
 import com.onestep.backgroundmonitoringsample.R
@@ -26,8 +23,8 @@ import com.onestep.backgroundmonitoringsample.ui.model.NotificationStyle
  * [co.onestep.android.core.monitoring.OSTNotificationConfig]:
  *
  *  - [default] — the SDK renders a simple title/text notification for you.
- *  - [custom]  — the SDK renders a richer notification showing your app name and live progress
- *                toward a daily step goal.
+ *  - [custom]  — the SDK renders a richer notification showing your app name (or title), an
+ *                optional line of text, and live progress toward a daily step goal.
  *  - [native]  — you build a fully custom [android.app.Notification] and hand it to the SDK.
  *
  * `setCustomMonitoringNotification` can be called at any time, including while monitoring is
@@ -55,13 +52,6 @@ object MonitoringNotifications {
     private const val PREFS_NAME = "onestep_sample_prefs"
     private const val KEY_STYLE = "notification_style"
 
-    // SDK-internal foreground service + command used to refresh the live notification. The SDK
-    // already rebuilds the notification from the persisted config when it receives this action;
-    // setCustomMonitoringNotification itself does NOT trigger it, so we send it ourselves.
-    private const val ALWAYS_ON_SERVICE_FQN =
-        "co.onestep.android.core.monitoring.background.OSTAlwaysOnForegroundService"
-    private const val ACTION_UPDATE_NOTIFICATION = "ACTION_UPDATE_NOTIFICATION"
-
     /** The notification style the user last selected, persisted across app restarts. */
     fun savedStyle(context: Context): NotificationStyle {
         val name = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -70,12 +60,10 @@ object MonitoringNotifications {
     }
 
     /**
-     * Applies [style] to the SDK's foreground-service notification and remembers the choice.
+     * Applies [style] to the SDK's foreground-service notification and remembers the choice. The
+     * SDK persists the config and repaints the live notification if monitoring is running.
      *
-     * Note: the SDK only *persists* the config here — it does not refresh a notification that is
-     * already showing. Call [refreshLiveNotification] afterwards to apply it to the live one.
-     *
-     * @return [OSTResult.Success] when the SDK accepted the config, otherwise [OSTResult.Failure].
+     * @return [OSTResult.Success] when the SDK accepted the config, otherwise [OSTResult.Error].
      */
     fun apply(
         monitoring: OSTMonitoring,
@@ -89,38 +77,31 @@ object MonitoringNotifications {
         return setNotificationConfig(monitoring, context, style)
     }
 
-    /**
-     * Forces the running always-on service to rebuild the live notification from the config just
-     * applied. No-op safe to call when the service is running; only call this while monitoring is
-     * active (otherwise it would start the service for a user who has opted out).
-     */
-    fun refreshLiveNotification(context: Context) {
-        val intent = Intent()
-            .setComponent(ComponentName(context.packageName, ALWAYS_ON_SERVICE_FQN))
-            .setAction(ACTION_UPDATE_NOTIFICATION)
-        ContextCompat.startForegroundService(context, intent)
-    }
-
     private fun setNotificationConfig(
         monitoring: OSTMonitoring,
         context: Context,
         style: NotificationStyle,
     ): OSTResult<Unit> = monitoring.setCustomMonitoringNotification {
         when (style) {
-            // Style 1 — DEFAULT: the SDK renders the notification. Title/text are lambdas so they
-            // can be re-evaluated by the SDK (e.g. for localization) each time it rebuilds.
+            // Style 1 — DEFAULT: the SDK renders the notification. Title/text are lambdas, which
+            // the SDK re-evaluates when it rebuilds the notification in this process. It also
+            // saves their current values, which it shows after a headless restart.
             NotificationStyle.DEFAULT -> default(
                 icon = NOTIFICATION_ICON,
                 title = { "$APP_NAME is active" },
                 text = { "OneStep is tracking your movement in the background" },
             )
 
-            // Style 2 — CUSTOM: the SDK renders a richer notification with your app name and a
-            // live progress bar toward `stepsGoal`. The SDK fills in the current step count.
+            // Style 2 — CUSTOM: the SDK renders a richer notification with a live progress bar
+            // toward `stepsGoal` and fills in the current step count. `title` replaces the
+            // `appName` header and `text` adds one line under it (SDK 2.2.2+). Both are plain
+            // strings because the SDK persists them to rebuild the notification after a restart.
             NotificationStyle.CUSTOM -> custom(
                 appName = APP_NAME,
                 stepsGoal = DAILY_STEPS_GOAL,
                 icon = NOTIFICATION_ICON,
+                title = "Your daily activity",
+                text = "Steps count toward your daily goal",
             )
 
             // Style 3 — NATIVE: you build the entire android.app.Notification. Use this when you
