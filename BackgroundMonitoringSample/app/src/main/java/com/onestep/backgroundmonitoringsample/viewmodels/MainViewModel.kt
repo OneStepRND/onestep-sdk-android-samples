@@ -12,15 +12,18 @@ import co.onestep.android.core.getOr
 import co.onestep.android.core.monitoring.OSTSortOrder
 import co.onestep.android.core.monitoring.getMonitoring
 import co.onestep.android.core.onSuccess
+import com.onestep.backgroundmonitoringsample.BgMonitoringSampleApplication
 import com.onestep.backgroundmonitoringsample.notifications.MonitoringNotifications
 import com.onestep.backgroundmonitoringsample.ui.model.ActivityItem
 import com.onestep.backgroundmonitoringsample.ui.model.MonitoringUiState
 import com.onestep.backgroundmonitoringsample.ui.model.NotificationStyle
 import com.onestep.backgroundmonitoringsample.ui.model.ScreenState
 import java.time.LocalDate
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -105,21 +108,32 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             .onSuccess { _notificationDismissible.value = dismissible }
     }
 
+    private var started = false
+    private var monitoringJob: Job? = null
+
+    /** Starts observing the SDK. Safe to call on every Activity onCreate: it runs once. */
     fun start() {
+        if (started) return
+        started = true
+        val connectionError = getApplication<BgMonitoringSampleApplication>().connectionError
         viewModelScope.launch {
-            oneStep.identificationState.collect { state ->
-                isIdentified = state is OSTIdentificationState.Identified
-                when (state) {
-                    is OSTIdentificationState.Identified -> {
-                        collectMonitoringState()
-                        screenState = ScreenState.Initialized
+            // Unidentified alone means "still connecting"; with a connection error it means the
+            // automatic setPatient() failed, so show the error instead of loading forever.
+            combine(oneStep.identificationState, connectionError) { state, error -> state to error }
+                .distinctUntilChanged()
+                .collect { (state, error) ->
+                    isIdentified = state is OSTIdentificationState.Identified
+                    when (state) {
+                        is OSTIdentificationState.Identified -> {
+                            collectMonitoringState()
+                            screenState = ScreenState.Initialized
+                        }
+                        is OSTIdentificationState.Lost ->
+                            screenState = ScreenState.Error("Session lost: ${state.cause.type.name}")
+                        OSTIdentificationState.Unidentified ->
+                            screenState = error?.let { ScreenState.Error(it) } ?: ScreenState.Loading
                     }
-                    is OSTIdentificationState.Lost ->
-                        screenState = ScreenState.Error("Session lost: ${state.cause.message}")
-                    OSTIdentificationState.Unidentified ->
-                        screenState = ScreenState.Loading
                 }
-            }
         }
     }
 
@@ -145,7 +159,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun collectMonitoringState() {
-        viewModelScope.launch {
+        // Identified can be reached again after Lost; keep a single monitoring collector.
+        monitoringJob?.cancel()
+        monitoringJob = viewModelScope.launch {
             val monitoring = oneStep.getMonitoring().getOr(null) ?: return@launch
             combine(
                 monitoring.state,
