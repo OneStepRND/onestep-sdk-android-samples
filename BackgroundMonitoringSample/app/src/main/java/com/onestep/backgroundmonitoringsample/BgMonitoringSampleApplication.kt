@@ -35,6 +35,14 @@ class BgMonitoringSampleApplication : Application() {
             oneStepSdk = oneStep
             // Collect SDK events
             EventsCollector.startCollecting(oneStep, applicationScope)
+            // Set the foreground-service notification right after initialize(), before any network
+            // call. The SDK can restart the monitoring service in a headless process (boot, app
+            // update); onCreate() runs there too, so even a native(...) notification is restored.
+            // We re-apply the user's last choice (default on first run) so the live notification
+            // matches the in-app picker. All three styles are built in MonitoringNotifications.
+            oneStep.getMonitoring().onSuccess { monitoring ->
+                MonitoringNotifications.apply(monitoring, this, MonitoringNotifications.savedStyle(this))
+            }
             applicationScope.launch { identifyAndStartMonitoring(oneStep) }
         }.onError { error ->
             Log.e(TAG, "SDK initialize failed: ${error.cause.message}")
@@ -59,11 +67,6 @@ class BgMonitoringSampleApplication : Application() {
             // enable = "make the feature available", optIn/optOut = "the user's consent toggle".
             // Docs: https://glorious-caboc-cd3.notion.site/onestep-collect-for-android
             monitoring.enable()
-            // Step 4: Set the foreground-service notification. We re-apply the user's last choice
-            // (default on first run) so the live notification matches the in-app picker after an
-            // app restart. All three styles are built in MonitoringNotifications so the startup and
-            // in-app paths stay in sync.
-            MonitoringNotifications.apply(monitoring, this, MonitoringNotifications.savedStyle(this))
         }.onError { error ->
             Log.e(TAG, "SDK setPatient failed: ${error.cause.message}")
         }

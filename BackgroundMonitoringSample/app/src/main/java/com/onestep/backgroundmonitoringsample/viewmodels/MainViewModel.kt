@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import co.onestep.android.core.OSTIdentificationState
 import co.onestep.android.core.OneStep
 import co.onestep.android.core.getOr
-import co.onestep.android.core.monitoring.OSTMonitoringRuntimeState
 import co.onestep.android.core.monitoring.OSTSortOrder
 import co.onestep.android.core.monitoring.getMonitoring
 import co.onestep.android.core.onSuccess
@@ -43,6 +42,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         MutableStateFlow(MonitoringNotifications.savedStyle(getApplication()))
     val notificationStyle: StateFlow<NotificationStyle> = _notificationStyle
 
+    // Whether the user may swipe the monitoring notification away. The SDK persists this setting.
+    private val _notificationDismissible = MutableStateFlow(
+        oneStep.getMonitoring().getOr(null)?.isMonitoringNotificationDismissible ?: false,
+    )
+    val notificationDismissible: StateFlow<Boolean> = _notificationDismissible
+
     // Daily step summaries shown on the Records screen. Loaded through the ViewModel (rather than
     // the screen reaching into the SDK directly) so all SDK access stays in one place.
     private val _records = MutableStateFlow<List<ActivityItem>>(emptyList())
@@ -75,21 +80,25 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     /**
      * Switches the foreground-service notification style at runtime. setCustomMonitoringNotification
-     * only persists the config, so when monitoring is active we ask the running service to rebuild
-     * the live notification. The choice is persisted (in [MonitoringNotifications.apply]) and the UI
-     * reflects it once the SDK confirms it accepted the config.
+     * persists the config and repaints the live notification when monitoring is active. The choice
+     * is also saved in [MonitoringNotifications.apply], and the UI reflects it once the SDK confirms
+     * it accepted the config.
      */
     fun setNotificationStyle(style: NotificationStyle) {
-        viewModelScope.launch {
-            val monitoring = oneStep.getMonitoring().getOr(null) ?: return@launch
-            MonitoringNotifications.apply(monitoring, getApplication(), style)
-                .onSuccess {
-                    _notificationStyle.value = style
-                    if (monitoring.state.value is OSTMonitoringRuntimeState.Active) {
-                        MonitoringNotifications.refreshLiveNotification(getApplication())
-                    }
-                }
-        }
+        val monitoring = oneStep.getMonitoring().getOr(null) ?: return
+        MonitoringNotifications.apply(monitoring, getApplication(), style)
+            .onSuccess { _notificationStyle.value = style }
+    }
+
+    /**
+     * Lets the user swipe the always-on notification away (SDK 2.2.0+). Monitoring is not affected:
+     * the foreground service keeps running. Android shows the notification again when the service
+     * restarts (reboot, app update, process restart).
+     */
+    fun setNotificationDismissible(dismissible: Boolean) {
+        val monitoring = oneStep.getMonitoring().getOr(null) ?: return
+        monitoring.setMonitoringNotificationDismissible(dismissible)
+            .onSuccess { _notificationDismissible.value = dismissible }
     }
 
     fun start() {

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">OneStepSDKSampleApp</string>
+    <string name="recording_notification_title">Recording your walk</string>
+    <string name="recording_notification_text">Keep the phone with you until the recording ends</string>
 </resources>
