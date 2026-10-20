@@ -74,14 +74,15 @@ class SDKSampleApplication : Application() {
         }
     }
 
-    suspend fun connectUser() {
-        val oneStep = oneStepSdk ?: return
-        if (missingCredentials.isNotEmpty()) return
+    /** Identifies the user. Returns true when setPatient() succeeded. */
+    suspend fun connectUser(): Boolean {
+        val oneStep = oneStepSdk ?: return false
+        if (missingCredentials.isNotEmpty()) return false
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         // Credentials come from local.properties via BuildConfig, so no keys live in source.
         // identityVerification is the precomputed HMAC digest of customerPatientId (or blank);
         // pass null when blank to connect without identity verification. See the README "Keys".
-        oneStep.setPatient(
+        return oneStep.setPatient(
             apiKey = BuildConfig.CLIENT_TOKEN,
             customerPatientId = BuildConfig.CUSTOMER_PATIENT_ID,
             identityVerification = BuildConfig.IDENTITY_VERIFICATION.ifBlank { null },
@@ -96,6 +97,6 @@ class SDKSampleApplication : Application() {
             configureRecordingNotification(oneStep)
         }.onError { error ->
             Log.e(TAG, "SDK setPatient failed: ${error.cause.message}")
-        }
+        }.isSuccess
     }
 }
