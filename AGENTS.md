@@ -11,6 +11,7 @@ or build it from its own folder. There is no root Gradle build.
 
 | Folder | Shows |
 |---|---|
+| `QuickstartSample/` | Start here. Core SDK, minimal: initialize, `setPatient`, a 30-second walk, its walk score |
 | `ActiveMesurementSample/` | Core SDK: initialize, `setPatient`, record a walk, analyze it |
 | `BackgroundMonitoringSample/` | Core SDK: background monitoring, daily summaries, notifications |
 | `UiKitSample/` | UIKit: prebuilt recording flows, summary, carelog, permissions, theming |
@@ -38,7 +39,7 @@ Each sample's README maps its features to the files that implement them.
      `oneStep.getInsights()`. Each returns an `OSTResult`.
    - Handle results with `.onSuccess {}`, `.onError { it.cause.type }` and `.getOr(default)`.
    - Since 2.3.0, `motionLab.start()` returns an error instead of throwing. Always check it.
-4. **Keep the three samples in step.** They share one toolchain; a version bump touches every
+4. **Keep the four samples in step.** They share one toolchain; a version bump touches every
    `gradle/libs.versions.toml`. Renovate groups these bumps.
 5. **Compose:** pass state and lambdas to composables, not ViewModels. Give every composable a
    `@Preview`.

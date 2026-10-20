@@ -6,7 +6,7 @@
   "labels": ["dependencies"],
   "packageRules": [
     {
-      "description": "Bump the OneStep SDK in all three samples in one PR, as soon as it ships.",
+      "description": "Bump the OneStep SDK in all four samples in one PR, as soon as it ships.",
       "matchPackageNames": ["co.onestep.android:*"],
       "groupName": "OneStep SDK",
       "schedule": ["at any time"]
