@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Runtime permission the app requests before a recording (see MainActivity). The SDK needs
+         it to detect steps. The SDK adds its other permissions through manifest merging. -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
+    <!-- On Android 13+ the recording notification is visible only if the app has the
+         POST_NOTIFICATIONS runtime permission. This minimal sample does not request it, so the
+         recording runs without a visible notification there. A real app should request it. -->
+
+    <!-- Health data must not leave the device in a backup. allowBackup="false" turns backups off
+         below Android 12; dataExtractionRules also excludes device-to-device transfers on 12+. -->
+    <application
+        android:name=".QuickstartApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        tools:ignore="DataExtractionRules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Quickstart">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

@@ -18,16 +18,20 @@ Each sample is a standalone Gradle project with its own README (setup, keys, and
 
 | Sample | Demonstrates |
 |---|---|
+| [`QuickstartSample`](QuickstartSample/README.md) | **Start here:** the smallest complete integration — initialize, connect a user, record a 30-second walk, and show the walk score. Three Kotlin files. |
 | [`ActiveMesurementSample`](ActiveMesurementSample/README.md) | On-demand ("active") measurement — record a walk and get a walk score. |
 | [`BackgroundMonitoringSample`](BackgroundMonitoringSample/README.md) | Background activity monitoring, daily summaries, and foreground-service notification styles. |
 | [`UiKitSample`](UiKitSample/README.md) | Drop-in OneStep **UIKit** screens (recording flow, summary, carelog, permission flow). |
 
-All three follow the same setup pattern: credentials live in a gitignored `local.properties` and are exposed via `BuildConfig` (see each sample's README), so no keys are committed.
+All four follow the same setup pattern: credentials live in a gitignored `local.properties` and are exposed via `BuildConfig` (see each sample's README), so no keys are committed.
 
 ## Quick start
 
-1. Clone the repo and open one sample folder (for example `ActiveMesurementSample/`) in Android
-   Studio. Each sample is its own Gradle project.
+Start with [`QuickstartSample`](QuickstartSample/README.md). Its README shows the whole
+integration on one page. Move to the other samples for more features.
+
+1. Clone the repo and open one sample folder (`QuickstartSample/` to start) in Android Studio.
+   Each sample is its own Gradle project.
 2. Copy the credentials template and fill in your values:
 
    ```bash
@@ -61,8 +65,8 @@ The OneStep SDK is currently available exclusively to our customers. We provide 
 | Compose BOM | 2026.03.00 |
 | OneStep SDK (core / uikit) | 2.3.0 |
 
-All three samples use the same toolchain. Each sample has its own `gradle/libs.versions.toml`, so
-bump versions in all three together. The samples use AGP 9 defaults: built-in Kotlin (no
+All four samples use the same toolchain. Each sample has its own `gradle/libs.versions.toml`, so
+bump versions in all four together. The samples use AGP 9 defaults: built-in Kotlin (no
 `org.jetbrains.kotlin.android` plugin, only the Compose compiler plugin) and the new DSL, with no
 compatibility opt-outs in `gradle.properties`. You can copy the build files into an AGP 9 project
 as-is.
@@ -212,7 +216,7 @@ UiKitSample now also launches the 6-minute walk, 2-minute walk and Stairs flows,
 
 | Path | What it is |
 |---|---|
-| `ActiveMesurementSample/`, `BackgroundMonitoringSample/`, `UiKitSample/` | Standalone sample projects, each with a README and `local.properties.example` |
+| `QuickstartSample/`, `ActiveMesurementSample/`, `BackgroundMonitoringSample/`, `UiKitSample/` | Standalone sample projects, each with a README and `local.properties.example` |
 | `.github/workflows/` | CI: builds every sample, and scans every change for secrets |
 | `renovate.json` | Weekly dependency PRs; OneStep SDK releases are bumped in all samples at once |
 | `AGENTS.md` | Instructions for AI coding assistants |

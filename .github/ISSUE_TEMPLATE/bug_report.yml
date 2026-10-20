@@ -15,6 +15,7 @@ body:
     attributes:
       label: Sample
       options:
+        - QuickstartSample
         - ActiveMesurementSample
         - BackgroundMonitoringSample
         - UiKitSample
