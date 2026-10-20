@@ -2,7 +2,7 @@
 
 ## Versioning
 
-![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
+![Commercial License](https://img.shields.io/badge/license-Commercial-green.svg)
 ![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)
 ![SDK](https://img.shields.io/badge/sdk-2.3.0-red.svg)
 
@@ -103,4 +103,4 @@ printf '%s' "<customerPatientId>" | openssl dgst -sha256 -hmac "<SECRET>" -hex
 
 ## Support
 
-For support, additional information, or to report issues, contact `ziv@onestep.co`.
+For support, additional information, or to report issues, contact `shahar@onestep.co`.
