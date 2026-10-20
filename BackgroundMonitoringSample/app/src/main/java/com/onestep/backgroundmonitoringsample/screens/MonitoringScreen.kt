@@ -22,6 +22,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +53,8 @@ fun MonitoringScreen(
     onOptIn: () -> Unit,
     onOptOut: () -> Unit,
     onSelectNotificationStyle: (NotificationStyle) -> Unit,
+    notificationDismissible: Boolean,
+    onNotificationDismissibleChange: (Boolean) -> Unit,
     onShowRecords: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -95,6 +100,8 @@ fun MonitoringScreen(
         NotificationStyleSection(
             selected = notificationStyle,
             onSelect = onSelectNotificationStyle,
+            dismissible = notificationDismissible,
+            onDismissibleChange = onNotificationDismissibleChange,
         )
         Spacer(modifier = Modifier.height(32.dp))
         HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
@@ -160,6 +167,8 @@ private fun ScreenTitle(
 private fun NotificationStyleSection(
     selected: NotificationStyle,
     onSelect: (NotificationStyle) -> Unit,
+    dismissible: Boolean,
+    onDismissibleChange: (Boolean) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         ScreenTitle(text = "Notification Style")
@@ -176,6 +185,41 @@ private fun NotificationStyleSection(
                 onSelect = { onSelect(style) },
             )
         }
+        DismissibleOption(checked = dismissible, onCheckedChange = onDismissibleChange)
+    }
+}
+
+/**
+ * setMonitoringNotificationDismissible (SDK 2.2.0+) lets the user swipe the ongoing notification
+ * away. Monitoring keeps running either way. Label it as permission to dismiss, not as "hide":
+ * Android shows the notification again whenever the service restarts.
+ */
+@Composable
+private fun DismissibleOption(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    // The whole row is the toggle, so TalkBack reads the label together with the switch state.
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "Allow dismissing the notification",
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Text(
+                text = "Monitoring continues when the user swipes it away.",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            )
+        }
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 
@@ -218,6 +262,8 @@ private fun MonitoringScreenPreview() {
         onOptIn = {},
         onOptOut = {},
         onSelectNotificationStyle = {},
+        notificationDismissible = false,
+        onNotificationDismissibleChange = {},
         onShowRecords = {},
     )
 }
@@ -228,5 +274,13 @@ private fun NotificationStyleSectionPreview() {
     NotificationStyleSection(
         selected = NotificationStyle.CUSTOM,
         onSelect = {},
+        dismissible = true,
+        onDismissibleChange = {},
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DismissibleOptionPreview() {
+    DismissibleOption(checked = true, onCheckedChange = {})
 }

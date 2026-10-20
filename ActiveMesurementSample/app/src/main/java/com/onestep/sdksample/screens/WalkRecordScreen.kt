@@ -25,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.BottomEnd
@@ -34,7 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.onestep.android.core.OSTParamName
 import com.onestep.sdksample.viewmodels.RecorderUiState
@@ -46,7 +47,8 @@ fun WalkRecordScreen(
     disconnect: () -> Unit = {},
 ) {
     val viewModel: RecorderViewModel = viewModel()
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
 
     Box(
         modifier = Modifier
@@ -83,6 +85,18 @@ fun WalkRecordScreen(
                     modifier = Modifier.padding(8.dp),
                     fontSize = 28.sp,
                     text = "State = $phase",
+                )
+            }
+
+            AnimatedVisibility(
+                visible = state is RecorderUiState.Recording && progress != null,
+                label = "progress",
+            ) {
+                val current = progress ?: return@AnimatedVisibility
+                RecordingProgressText(
+                    elapsedSeconds = current.elapsedSeconds,
+                    totalSeconds = current.totalSeconds,
+                    steps = current.steps,
                 )
             }
 
@@ -132,6 +146,28 @@ fun WalkRecordScreen(
             )
         }
     }
+}
+
+@Composable
+private fun RecordingProgressText(
+    elapsedSeconds: Long,
+    totalSeconds: Long,
+    steps: Int,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        modifier = modifier.padding(8.dp),
+        fontSize = 22.sp,
+        text = "${elapsedSeconds.toClock()} / ${totalSeconds.toClock()}  ·  $steps steps",
+    )
+}
+
+private fun Long.toClock(): String = "%d:%02d".format(this / 60, this % 60)
+
+@Preview(showBackground = true)
+@Composable
+private fun RecordingProgressTextPreview() {
+    RecordingProgressText(elapsedSeconds = 23, totalSeconds = 60, steps = 31)
 }
 
 @Composable

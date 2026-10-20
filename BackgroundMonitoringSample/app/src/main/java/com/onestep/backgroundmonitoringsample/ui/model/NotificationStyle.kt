@@ -17,7 +17,7 @@ enum class NotificationStyle(
     ),
     CUSTOM(
         label = "Custom",
-        description = "SDK-rendered app name with live progress toward a step goal.",
+        description = "SDK-rendered title and text with live progress toward a step goal.",
     ),
     NATIVE(
         label = "Native",

@@ -24,6 +24,7 @@ import co.onestep.android.uikit.features.permissions.OSTPermissionFlowActivity
 import co.onestep.android.uikit.features.recordFlow.configurations.OSTRecordingConfiguration
 import co.onestep.android.uikit.features.recordFlow.presentation.OSTRecordingFlowActivity
 import com.onestep.onestepuikitsample.screens.App
+import com.onestep.onestepuikitsample.screens.RecordingFlow
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -55,14 +56,7 @@ class MainActivity : AppCompatActivity() {
                         modifier = Modifier.padding(padding).background(color = MaterialTheme.colorScheme.surface),
                         viewModel,
                         connect = { connect() },
-                        onStartDefaultRecording = {
-                            startRecordingFlow(OSTRecordingConfiguration.defaultWalk(this).copy(readyForAnalysisUiAssist = true))
-                                                  },
-                        onStartTugTest = { startRecordingFlow(OSTRecordingConfiguration.tug(this)) },
-                        onStartStsTest = { startRecordingFlow(OSTRecordingConfiguration.sts(this)) },
-                        onStartDualTaskTest = { startRecordingFlow(OSTRecordingConfiguration.dualTaskSubtract(this, instructions = "This will be displayed in the preparation screen prior to the test, you can use this stub to read instructions to your subject")) },
-                        onStartRomTest = { startRecordingFlow(OSTRecordingConfiguration.romExt(this)) },
-                        onStartBalanceTest = { startRecordingFlow(OSTRecordingConfiguration.balanceTest(this)) },
+                        onStartRecording = { flow -> startRecordingFlow(flow.toConfiguration()) },
                         onStartPermissionsFlow = {
                             if (context.applicationContext.checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
                                 scope.launch {
@@ -79,6 +73,27 @@ class MainActivity : AppCompatActivity() {
                 }
             )
         }
+    }
+
+    /** Maps each sample flow to its UIKit configuration factory. */
+    private fun RecordingFlow.toConfiguration(): OSTRecordingConfiguration = when (this) {
+        RecordingFlow.WALK ->
+            OSTRecordingConfiguration.defaultWalk(this@MainActivity).copy(readyForAnalysisUiAssist = true)
+        RecordingFlow.TUG -> OSTRecordingConfiguration.tug(this@MainActivity)
+        RecordingFlow.STS -> OSTRecordingConfiguration.sts(this@MainActivity)
+        RecordingFlow.KNEE_ROM -> OSTRecordingConfiguration.romExt(this@MainActivity)
+        RecordingFlow.BALANCE -> OSTRecordingConfiguration.balanceTest(this@MainActivity)
+        RecordingFlow.DUAL_TASK -> OSTRecordingConfiguration.dualTaskSubtract(
+            this@MainActivity,
+            instructions = "This will be displayed in the preparation screen prior to the test, " +
+                "you can use this stub to read instructions to your subject",
+        )
+        RecordingFlow.SIX_MINUTE_WALK -> OSTRecordingConfiguration.sixMinuteWalk(this@MainActivity)
+        RecordingFlow.TWO_MINUTE_WALK -> OSTRecordingConfiguration.twoMinuteWalk(this@MainActivity)
+        RecordingFlow.STAIRS -> OSTRecordingConfiguration.stairs(this@MainActivity)
+        // Open-ended recording with no known protocol (SDK 2.1.4+): uploaded but never analyzed.
+        // `title` lets the clinician name it, since OneStep does not know what was recorded.
+        RecordingFlow.GENERIC -> OSTRecordingConfiguration.genericRecording().copy(title = "Sample session")
     }
 
     /**

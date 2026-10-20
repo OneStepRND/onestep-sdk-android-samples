@@ -48,12 +48,7 @@ import com.onestep.onestepuikitsample.ui.theme.font.VintageBrushFontFamily
 @Composable
 fun MainScreen(
     modifier: Modifier,
-    onStartDefaultRecording: () -> Unit,
-    onStartTugTest: () -> Unit,
-    onStartStsTest: () -> Unit,
-    onStartDualTaskTest: () -> Unit,
-    onStartRomTest: () -> Unit,
-    onStartBalanceTest: () -> Unit,
+    onStartRecording: (RecordingFlow) -> Unit,
     onStartPermissionsFlow: () -> Unit,
     onStartCareLogActivity: () -> Unit,
     viewModel: MainViewModel
@@ -70,52 +65,8 @@ fun MainScreen(
             fontFamily = viewModel.currentFont.value,
         )
 
-        MainButton(
-            "Walk recording",
-            R.drawable.ic_walks,
-            primary,
-        ) {
-            onStartDefaultRecording()
-        }
-
-        MainButton(
-            "Timed up and go",
-            R.drawable.ic_physical_activity,
-            primary
-        ) {
-            onStartTugTest()
-        }
-
-        MainButton(
-            "Sit to stand",
-            R.drawable.ic_sts,
-            primary
-        ) {
-            onStartStsTest()
-        }
-
-        MainButton(
-            "Knee flexion test",
-            co.onestep.android.uikit.R.drawable.ic_knee_extention,
-            primary
-        ) {
-            onStartRomTest()
-        }
-
-        MainButton(
-            "Balance test",
-            R.drawable.balance_test,
-            primary
-        ) {
-            onStartBalanceTest()
-        }
-
-        MainButton(
-            "Dual task",
-            R.drawable.ic_dual_task,
-            primary
-        ) {
-            onStartDualTaskTest()
+        RecordingFlow.entries.forEach { flow ->
+            MainButton(flow.label, flow.icon, primary) { onStartRecording(flow) }
         }
 
         MainButton(

@@ -25,6 +25,7 @@ import com.onestep.backgroundmonitoringsample.viewmodels.MainViewModel
 fun MainScreen(viewModel: MainViewModel) {
     val monitoringState = viewModel.monitoringUiState.collectAsState()
     val notificationStyle = viewModel.notificationStyle.collectAsState()
+    val notificationDismissible = viewModel.notificationDismissible.collectAsState()
     val screenState = viewModel.screenState
 
     // Permission for activity recognition is required to use the SDK
@@ -82,6 +83,8 @@ fun MainScreen(viewModel: MainViewModel) {
                     onSelectNotificationStyle = { style ->
                         viewModel.setNotificationStyle(style)
                     },
+                    notificationDismissible = notificationDismissible.value,
+                    onNotificationDismissibleChange = viewModel::setNotificationDismissible,
                     onShowRecords = {
                         viewModel.setState(ScreenState.Records)
                     },

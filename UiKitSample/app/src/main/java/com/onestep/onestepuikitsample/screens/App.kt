@@ -11,12 +11,7 @@ fun App(
     modifier: Modifier,
     viewModel: MainViewModel,
     connect: () -> Unit,
-    onStartDefaultRecording: () -> Unit,
-    onStartTugTest: () -> Unit,
-    onStartStsTest: () -> Unit,
-    onStartDualTaskTest: () -> Unit,
-    onStartRomTest: () -> Unit,
-    onStartBalanceTest: () -> Unit,
+    onStartRecording: (RecordingFlow) -> Unit,
     onStartPermissionsFlow: () -> Unit,
     onStartCareLogActivity: () -> Unit,
 ) {
@@ -26,12 +21,7 @@ fun App(
                 || viewModel.sdkState is OSTIdentificationState.Lost -> SDKnotInitialized(viewModel) { connect() }
         else -> MainScreen(
             modifier,
-            onStartDefaultRecording,
-            onStartTugTest,
-            onStartStsTest,
-            onStartDualTaskTest,
-            onStartRomTest,
-            onStartBalanceTest,
+            onStartRecording,
             onStartPermissionsFlow,
             onStartCareLogActivity,
             viewModel
