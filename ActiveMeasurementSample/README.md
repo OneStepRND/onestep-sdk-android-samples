@@ -6,7 +6,7 @@
 ![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)
 ![SDK](https://img.shields.io/badge/sdk-2.3.0-red.svg)
 
-ActiveMesurementSample is an app demonstrating the OneStep core SDK collecting sensor data and analyzing it to produce a walk score, quantifying the nuances of walking patterns.
+ActiveMeasurementSample is an app demonstrating the OneStep core SDK collecting sensor data and analyzing it to produce a walk score, quantifying the nuances of walking patterns.
 
 ## Documentation
 
@@ -56,7 +56,7 @@ val measurement = motionLab.analyze(timeout = 60_000).getOr(null)
 - **Draw timers from `currentRecordingWindow`.** The SDK owns the recording clock. Re-read
   `remainingMillis()` or `elapsedMillis()` on each tick so the UI never drifts from the recorder.
 
-![Alt text](https://github.com/OneStepRND/onestep-sdk-android-samples/blob/main/ActiveMesurementSample/activeMeasurementTutorial.gif)
+![Alt text](https://github.com/OneStepRND/onestep-sdk-android-samples/blob/main/ActiveMeasurementSample/activeMeasurementTutorial.gif)
 
 ### Requirements
 
@@ -74,7 +74,7 @@ source of truth for what builds. Update them together if you bump versions.
 
 ### Installation
 
-1. Clone this repo (or download the code) and open `ActiveMesurementSample` in Android Studio.
+1. Clone this repo (or download the code) and open `ActiveMeasurementSample` in Android Studio.
 2. Add your credentials to `local.properties` (see [Keys](#keys)).
 3. Run on a **physical device**. The emulator has no motion sensors, so you get no walk score.
 
