@@ -48,9 +48,9 @@ OneStep UIKit provides customization options, enabling you to tailor the UI comp
 | Compose BOM | 2026.03.00 |
 | OneStep UIKit | 2.3.0 |
 
-All three samples in this repo use the same toolchain. Bump versions in every sample's `gradle/libs.versions.toml` together.
+All samples in this repo use the same toolchain. Bump versions in every sample's `gradle/libs.versions.toml` together.
 
-### API Keys
+### Keys
 
 Before integrating OneStep UIKit, obtain your API credentials from the OneStep back-office under
 Developers > Settings (reach out to `shahar@onestep.co` for access).

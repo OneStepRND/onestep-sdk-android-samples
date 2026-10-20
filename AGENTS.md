@@ -52,8 +52,9 @@ From a sample folder, with JDK 17 or newer:
 ./gradlew :app:assembleDebug :app:assembleRelease :app:testDebugUnitTest :app:lintDebug
 ```
 
-The build works with no `local.properties`: credential fields are then empty strings, so the app
-compiles but cannot connect. A real recording needs a physical device; the emulator has no motion
+The build works with no `local.properties`: credential fields are then empty strings. Each sample
+then shows a setup screen at launch that names the missing keys (and logs only the key names),
+instead of failing later. A real recording needs a physical device; the emulator has no motion
 sensors.
 
 ## Git
