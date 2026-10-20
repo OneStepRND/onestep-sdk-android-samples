@@ -112,7 +112,7 @@ Permissions:
 
 The other samples in this repository show more:
 
-- [`ActiveMesurementSample`](../ActiveMesurementSample/README.md): live timer and step count,
+- [`ActiveMeasurementSample`](../ActiveMeasurementSample/README.md): live timer and step count,
   user tags, a branded recording notification, history, norms and insights.
 - [`BackgroundMonitoringSample`](../BackgroundMonitoringSample/README.md): background activity
   monitoring and daily summaries.

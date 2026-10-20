@@ -19,7 +19,7 @@ Each sample is a standalone Gradle project with its own README (setup, keys, and
 | Sample | Demonstrates |
 |---|---|
 | [`QuickstartSample`](QuickstartSample/README.md) | **Start here:** the smallest complete integration — initialize, connect a user, record a 30-second walk, and show the walk score. Three Kotlin files. |
-| [`ActiveMesurementSample`](ActiveMesurementSample/README.md) | On-demand ("active") measurement — record a walk and get a walk score. |
+| [`ActiveMeasurementSample`](ActiveMeasurementSample/README.md) | On-demand ("active") measurement — record a walk and get a walk score. |
 | [`BackgroundMonitoringSample`](BackgroundMonitoringSample/README.md) | Background activity monitoring, daily summaries, and foreground-service notification styles. |
 | [`UiKitSample`](UiKitSample/README.md) | Drop-in OneStep **UIKit** screens (recording flow, summary, carelog, permission flow). |
 
@@ -200,8 +200,8 @@ New APIs since 2.0, and where this repo shows them:
 
 | API | Since | Sample |
 |---|---|---|
-| `motionLab.currentRecordingWindow` — the SDK's recording clock | 2.1.0 | ActiveMesurementSample |
-| `motionLab.setCustomRecordingNotification { … }` | 2.2.0 | ActiveMesurementSample |
+| `motionLab.currentRecordingWindow` — the SDK's recording clock | 2.1.0 | ActiveMeasurementSample |
+| `motionLab.setCustomRecordingNotification { … }` | 2.2.0 | ActiveMeasurementSample |
 | `monitoring.setMonitoringNotificationDismissible(…)` | 2.2.0 | BackgroundMonitoringSample |
 | `custom(title = …, text = …)` monitoring notification copy | 2.2.2 | BackgroundMonitoringSample |
 | `OSTActivityType.GENERIC_RECORDING`, `motionLab.uploadWithoutAnalysis()` | 2.1.4 | UiKitSample (`genericRecording()`) |
@@ -216,7 +216,7 @@ UiKitSample now also launches the 6-minute walk, 2-minute walk and Stairs flows,
 
 | Path | What it is |
 |---|---|
-| `QuickstartSample/`, `ActiveMesurementSample/`, `BackgroundMonitoringSample/`, `UiKitSample/` | Standalone sample projects, each with a README and `local.properties.example` |
+| `QuickstartSample/`, `ActiveMeasurementSample/`, `BackgroundMonitoringSample/`, `UiKitSample/` | Standalone sample projects, each with a README and `local.properties.example` |
 | `.github/workflows/` | CI: builds every sample, and scans every change for secrets |
 | `renovate.json` | Weekly dependency PRs; OneStep SDK releases are bumped in all samples at once |
 | `AGENTS.md` | Instructions for AI coding assistants |
