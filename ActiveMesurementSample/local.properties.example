@@ -1,0 +1,17 @@
+# Copy this file to local.properties (gitignored) and fill in your values:
+#   cp local.properties.example local.properties
+# Never commit local.properties or put these values anywhere else in the repo.
+# Ask shahar@onestep.co for SDK access and credentials.
+
+# OneStep client token (API key) from the OneStep back office.
+onestep.clientToken=<YOUR-CLIENT-TOKEN>
+
+# A stable, non-identifying id for the test user. Do not use a real patient's name or record number.
+onestep.customerPatientId=<A-STABLE-TEST-USER-ID>
+
+# Optional. The hex HMAC_SHA256(key = identity-verification secret, message = customerPatientId),
+# computed on your server. Never put the secret itself here. Leave blank to skip verification.
+onestep.identityVerification=
+
+# Android Studio usually adds the SDK path itself:
+# sdk.dir=/path/to/Android/sdk
