@@ -148,9 +148,12 @@ class MainActivity : AppCompatActivity() {
     private fun connect() {
         viewModel.isConnecting = true
         lifecycleScope.launch {
-            (application as UiKitSampleApplication).connectUser()
-            // Also clears the spinner when setPatient() failed and the state stayed Unidentified.
-            viewModel.isConnecting = false
+            // On success the identificationState collector clears the spinner once the SDK
+            // reports Identified. Clear it here only on failure, so the connect screen never
+            // flashes between the two.
+            if (!(application as UiKitSampleApplication).connectUser()) {
+                viewModel.isConnecting = false
+            }
         }
     }
 }
