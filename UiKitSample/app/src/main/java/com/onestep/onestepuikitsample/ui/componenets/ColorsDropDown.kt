@@ -21,12 +21,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 
@@ -34,7 +34,8 @@ import androidx.compose.ui.unit.dp
 fun ColorsDropDown(
     color: Color,
     font: FontFamily,
-    expanded: MutableState<Boolean>,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
     colorOptions: List<Color>,
     onColorChange: (Color) -> Unit,
 ) {
@@ -48,7 +49,7 @@ fun ColorsDropDown(
                 containerColor = color,
             ),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-            onClick = { expanded.value = true }
+            onClick = { onExpandedChange(true) }
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -68,8 +69,8 @@ fun ColorsDropDown(
         }
 
         DropdownMenu(
-            expanded = expanded.value,
-            onDismissRequest = { expanded.value = false },
+            expanded = expanded,
+            onDismissRequest = { onExpandedChange(false) },
             modifier = Modifier.width(400.dp).padding(horizontal = 26.dp),
         ) {
             colorOptions.forEach { option ->
@@ -77,7 +78,7 @@ fun ColorsDropDown(
                     modifier = Modifier.background(option),
                     text = { },
                     onClick = {
-                        expanded.value = false
+                        onExpandedChange(false)
                         onColorChange(option)
                         // Trigger theme change logic here based on 'option'
                     },
@@ -85,4 +86,17 @@ fun ColorsDropDown(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ColorsDropDownPreview() {
+    ColorsDropDown(
+        color = Color.Blue,
+        font = FontFamily.Default,
+        expanded = false,
+        onExpandedChange = {},
+        colorOptions = listOf(Color.Blue, Color.Red),
+        onColorChange = {},
+    )
 }
