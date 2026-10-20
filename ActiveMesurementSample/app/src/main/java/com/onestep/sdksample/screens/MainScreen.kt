@@ -8,22 +8,20 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import co.onestep.android.core.OSTIdentificationState
+import androidx.compose.ui.tooling.preview.Preview
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import com.onestep.sdksample.viewmodels.MainViewModel
 
 @Composable
 @OptIn(ExperimentalPermissionsApi::class)
 fun MainScreen(
-    viewModel: MainViewModel,
+    isConnecting: Boolean,
+    isIdentified: Boolean,
+    sessionLostMessage: String?,
     connect: () -> Unit,
     disconnect: () -> Unit
 ) {
-    val sdkState = viewModel.sdkState
-    val isConnecting = viewModel.isConnecting
-
     val activityRecognitionPermissionState = rememberPermissionState(
         permission = Manifest.permission.ACTIVITY_RECOGNITION
     )
@@ -35,8 +33,9 @@ fun MainScreen(
             }
         }
 
-        sdkState is OSTIdentificationState.Unidentified || sdkState is OSTIdentificationState.Lost -> {
-            SDKnotInitialized(viewModel) { connect() }
+        // Unidentified or Lost
+        !isIdentified -> {
+            SDKnotInitialized(sessionLostMessage) { connect() }
         }
 
         // OneStep recorder requires Activity Recognition permission since Android 14.0
@@ -51,3 +50,27 @@ fun MainScreen(
 }
 
 val isOverAndroid34 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+
+@Preview(showBackground = true)
+@Composable
+private fun MainScreenNotIdentifiedPreview() {
+    MainScreen(
+        isConnecting = false,
+        isIdentified = false,
+        sessionLostMessage = null,
+        connect = {},
+        disconnect = {},
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MainScreenConnectingPreview() {
+    MainScreen(
+        isConnecting = true,
+        isIdentified = false,
+        sessionLostMessage = null,
+        connect = {},
+        disconnect = {},
+    )
+}
