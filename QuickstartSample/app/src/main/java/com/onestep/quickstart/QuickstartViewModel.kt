@@ -65,13 +65,14 @@ class QuickstartViewModel(private val oneStep: OneStep?) : ViewModel() {
                 oneStep.identificationState.collect { identification ->
                     _state.update { current ->
                         when {
-                            current is QuickstartUiState.Busy -> current // never interrupt a running call
-                            identification is OSTIdentificationState.Identified ->
-                                current as? QuickstartUiState.Connected ?: QuickstartUiState.Connected()
-                            identification is OSTIdentificationState.Lost -> QuickstartUiState.Disconnected(
-                                "Session lost (${identification.cause.type.name}). Connect again.",
-                            )
-                            else -> QuickstartUiState.Disconnected()
+                            // Never interrupt a running call. It reads identificationState when it ends.
+                            current is QuickstartUiState.Busy -> current
+                            // Keep the last result or error message when nothing really changed.
+                            identification is OSTIdentificationState.Identified &&
+                                current is QuickstartUiState.Connected -> current
+                            identification is OSTIdentificationState.Unidentified &&
+                                current is QuickstartUiState.Disconnected -> current
+                            else -> stateFor(identification)
                         }
                     }
                 }
@@ -94,6 +95,8 @@ class QuickstartViewModel(private val oneStep: OneStep?) : ViewModel() {
                 _state.value = QuickstartUiState.Disconnected("Could not connect (${error.typeName}).")
                 return@launch
             }
+            // setPatient() succeeded, so the patient is bound. identificationState can still hold
+            // its old value for a moment, so do not read it here. The collector applies later changes.
             _state.value = QuickstartUiState.Connected()
         }
     }
@@ -110,9 +113,22 @@ class QuickstartViewModel(private val oneStep: OneStep?) : ViewModel() {
         // Set Busy now, before the coroutine starts, so the Record button goes away at once.
         _state.value = QuickstartUiState.Busy("Preparing…")
         recordJob = viewModelScope.launch {
-            _state.value = QuickstartUiState.Connected(recordAndAnalyze(sdk))
+            val message = recordAndAnalyze(sdk)
+            // The session can be lost during the recording, and that change was not applied while
+            // Busy. Read the identification state now, so the screen never shows a stale Connected.
+            _state.value = stateFor(sdk.identificationState.value, message)
         }
     }
+
+    /** Maps the SDK's identification state to the screen. [message] shows only while still identified. */
+    private fun stateFor(identification: OSTIdentificationState, message: String? = null): QuickstartUiState =
+        when (identification) {
+            is OSTIdentificationState.Identified -> QuickstartUiState.Connected(message)
+            is OSTIdentificationState.Lost -> QuickstartUiState.Disconnected(
+                "Session lost (${identification.cause.type.name}). Connect again.",
+            )
+            else -> QuickstartUiState.Disconnected()
+        }
 
     private suspend fun recordAndAnalyze(sdk: OneStep): String {
         // MotionLab is the recording API. It is available only after setPatient() succeeds.

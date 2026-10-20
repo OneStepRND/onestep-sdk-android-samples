@@ -97,8 +97,9 @@ return when (measurement.resultState) {
 //   params[OSTParamName.WALKING_WALK_SCORE] and metadata.steps
 ```
 
-Every call returns an `OSTResult`: check it. Show only `error.cause.type`, never
-`error.cause.message`, because the message can contain the server's response body.
+Every call returns an `OSTResult`: check it. Show only `error.cause.type.name`. Never show
+`error.cause.message` or the `error.cause.type` object itself (for example `"${error.cause.type}"`):
+both can contain the server's response body.
 
 Permissions:
 
