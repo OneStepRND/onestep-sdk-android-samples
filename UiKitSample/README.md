@@ -3,7 +3,7 @@
 [![Platform](https://img.shields.io/badge/platform-Android-green.svg)](https://github.com/OneStepRND/onestep-sdk-android-samples/tree/main/UiKitSample)
 [![Languages](https://img.shields.io/badge/language-Kotlin-orange.svg)](https://github.com/OneStepRND/onestep-sdk-android-samples/tree/main/UiKitSample)
 ![Commercial License](https://img.shields.io/badge/license-Commercial-green.svg)
-![UiKit](https://img.shields.io/badge/uikit-2.0.0-blue.svg)
+![UiKit](https://img.shields.io/badge/uikit-2.3.0-blue.svg)
 
 ## Introduction
 
@@ -42,13 +42,13 @@ OneStep UIKit provides customization options, enabling you to tailor the UI comp
 | Component | Version |
 |---|---|
 | Android API (min) | 26 |
-| Android API (target / compile) | 35 |
-| Android Gradle Plugin | 9.0.0 |
+| Android API (target / compile) | 36 |
+| Android Gradle Plugin | 9.0.0 (Gradle 9.1.0, JDK 17+) |
 | Kotlin | 2.2.10 |
-| Compose BOM | 2024.09.02 |
-| OneStep UIKit | 2.0.0 |
+| Compose BOM | 2026.03.00 |
+| OneStep UIKit | 2.3.0 |
 
-This sample is the canonical toolchain reference for the repo — its `gradle/libs.versions.toml` is what the other sample apps' READMEs are aligned with.
+All three samples in this repo use the same toolchain. Bump versions in every sample's `gradle/libs.versions.toml` together.
 
 ### API Keys
 
@@ -103,19 +103,66 @@ OneStep.initialize(
 ### Installation
 UIKit for Android can be installed through Maven Central:
 
-Via version catalog:
-```bash
+Via version catalog (`gradle/libs.versions.toml`):
+```toml
+[versions]
+oneStepUiKit = "2.3.0"
+
+[libraries]
 oneStep-uikit = { group = "co.onestep.android", name = "uikit", version.ref = "oneStepUiKit" }
 ```
-Via Gradle
-```Bash
-implementation "co.onestep.android:uikit:$oneStepUiKit"
-
+Then in `app/build.gradle.kts`:
+```kotlin
+implementation(libs.oneStep.uikit)
+// or, without a version catalog:
+implementation("co.onestep.android:uikit:2.3.0")
 ```
 Note: it depends on the [OneStep SDK Core](https://central.sonatype.com/artifact/co.onestep.android/core).
 
 ### Permissions
-Physical activity permission is required for motion recording.
+Physical activity permission (`ACTIVITY_RECOGNITION`) is required for motion recording. Launch
+`OSTPermissionFlowActivity` to let the UIKit request it with its own screens.
+
+## Recording flows in this sample
+
+Each button on the main screen launches `OSTRecordingFlowActivity` with one
+`OSTRecordingConfiguration` factory. The mapping lives in
+[`MainActivity.kt`](app/src/main/java/com/onestep/onestepuikitsample/MainActivity.kt) →
+`toConfiguration()`, and the list in
+[`RecordingFlow.kt`](app/src/main/java/com/onestep/onestepuikitsample/screens/RecordingFlow.kt).
+
+| Button | Factory |
+|---|---|
+| Walk recording | `defaultWalk(context)` |
+| Timed up and go | `tug(context)` |
+| Sit to stand | `sts(context)` |
+| Knee extension test | `romExt(context)` |
+| Balance test | `balanceTest(context)` |
+| Dual task | `dualTaskSubtract(context, instructions)` |
+| 6-minute walk test | `sixMinuteWalk(context)` |
+| 2-minute walk test | `twoMinuteWalk(context)` |
+| Stairs | `stairs(context)` |
+| Generic recording | `genericRecording()` — uploaded, never analyzed (SDK 2.1.4+) |
+
+```kotlin
+startActivity(
+    OSTRecordingFlowActivity.buildIntent(
+        context,
+        config = OSTRecordingConfiguration.sixMinuteWalk(context),
+        customMetadata = mapOf("app" to "uikit sample app"),
+    ),
+)
+```
+
+### Configuration options added since 2.0
+
+- `onInstructionsRequested: (OSTActivityType) -> Unit` (2.2.2) — show your own instructions UI when
+  the user taps "View instructions". Capture no `Activity` or `Context` in it.
+- `title` (2.1.4) — names a Generic Recording. Longer than 30 characters is truncated.
+- `tagFields` (2.3.0) — renders your backend tag catalog as pre- and post-recording questions.
+  It replaces `preRecordingQuestions`, `postTaggingData`, `showPreRecordingAssistiveDeviceSelection`,
+  `showPreRecordingFootwearSelection` and `balance`, which are deprecated and will be removed in
+  the next release.
 
 ## UIKit at a glance
 

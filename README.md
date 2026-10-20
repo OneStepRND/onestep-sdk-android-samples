@@ -3,8 +3,8 @@
 ## Versioning
 
 ![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)
-![Core](https://img.shields.io/badge/core-2.0.0-red.svg)
-![UiKit](https://img.shields.io/badge/uikit-2.0.0-blue.svg)
+![Core](https://img.shields.io/badge/core-2.3.0-red.svg)
+![UiKit](https://img.shields.io/badge/uikit-2.3.0-blue.svg)
 
 This repository contains sample Android applications demonstrating how to integrate and use the OneStep SDK for motion analysis. The apps showcase how to record motion data, analyze it, and display the results within your own application.
 
@@ -38,15 +38,24 @@ The OneStep SDK is currently available exclusively to our customers. We provide 
 | Component | Version |
 |---|---|
 | Android API (min) | 26 |
-| Android API (target / compile) | 35 |
-| Android Gradle Plugin | 9.0.0 |
+| Android API (target / compile) | 36 |
+| Android Gradle Plugin | 9.0.0 (Gradle 9.1.0, JDK 17+) |
 | Kotlin | 2.2.10 |
-| Compose BOM | 2024.09.02 |
-| OneStep SDK (core / uikit) | 2.0.0 |
+| Compose BOM | 2026.03.00 |
+| OneStep SDK (core / uikit) | 2.3.0 |
 
-Toolchain versions mirror `UiKitSample/gradle/libs.versions.toml`, the canonical reference for sample apps in this repo. Bump versions there first, then propagate.
+All three samples use the same toolchain. Each sample has its own `gradle/libs.versions.toml`, so
+bump versions in all three together. The samples run AGP 9 in compatibility mode
+(`android.builtInKotlin=false`, `android.newDsl=false` in `gradle.properties`); the OneStep SDK
+itself does not need these flags.
 
 ### Installation
+
+```kotlin
+// app/build.gradle.kts — pick one. UIKit includes core.
+implementation("co.onestep.android:core:2.3.0")
+implementation("co.onestep.android:uikit:2.3.0")
+```
 
 `OneStep.initialize` returns an `OSTResult<OneStep>` — the success value is the SDK instance you use for everything else. Hold on to it (e.g. on your `Application`) and bind a user via `setPatient`, which is suspend and returns an `OSTResult`.
 
@@ -114,3 +123,44 @@ oneStepSdk.clearPatient()
 ```
 
 `clearPatient()` clears credentials, stops monitoring, and transitions `identificationState` back to `Unidentified`. SDK initialization is preserved — you don't need to call `initialize()` again before the next `setPatient()`.
+
+## Upgrading from 2.0.x to 2.3.0
+
+Typical integrations (initialize, `setPatient`, MotionLab, Monitoring, UIKit flows) compile
+against 2.3.0 without edits. A few narrow APIs did change: see the breaking notes for 2.0.1 (Static
+Balance metadata keys, `analyticsName` values), 2.1.2 (`DataDogEvents` removed) and 2.1.3
+(`recordingSavedScreen` callbacks are `suspend`) in the SDK changelog. Then check these points:
+
+1. **Check the result of `motionLab.start()`.** It now returns an `OSTResult` error instead of
+   throwing for a missing `ACTIVITY_RECOGNITION` permission (`MissingPermission`) or a duration
+   over `RECORDER_LIMIT_MILLIS` (`InvalidArgument`). A `try`/`catch` around `start()` no longer sees
+   these. If you ignore the result, your UI shows a recording that never began. `addMarker()`
+   returns `InvalidState` when the recording already ended.
+2. **Remove workarounds that refresh the monitoring notification.** `setCustomMonitoringNotification`
+   now repaints the live notification itself.
+3. **Rebuild prebuilt artifacts and update test fakes.** Several constructors gained parameters
+   (`OSTRecordingConfiguration`, `OSTCustomNotificationConfig`, `OSTUserInputMetaData`), so a
+   binary built against 2.0.x must be rebuilt. A fake that implements `OSTMotionLab` must add
+   `currentRecordingWindow`, `rescheduleAutoStop`, `uploadWithoutAnalysis`,
+   `setCustomRecordingNotification` and the `balanceScore` parameter of
+   `selfReportMotionMeasurement`. A fake `OSTMonitoring` must add
+   `setMonitoringNotificationDismissible` and `isMonitoringNotificationDismissible`.
+4. **Plan for the UIKit deprecations.** `preRecordingQuestions`, `postTaggingData`,
+   `showPreRecordingAssistiveDeviceSelection`, `showPreRecordingFootwearSelection` and `balance` on
+   `OSTRecordingConfiguration` are replaced by `tagFields` and will be removed in the next release.
+
+New APIs since 2.0, and where this repo shows them:
+
+| API | Since | Sample |
+|---|---|---|
+| `motionLab.currentRecordingWindow` — the SDK's recording clock | 2.1.0 | ActiveMesurementSample |
+| `motionLab.setCustomRecordingNotification { … }` | 2.2.0 | ActiveMesurementSample |
+| `monitoring.setMonitoringNotificationDismissible(…)` | 2.2.0 | BackgroundMonitoringSample |
+| `custom(title = …, text = …)` monitoring notification copy | 2.2.2 | BackgroundMonitoringSample |
+| `OSTActivityType.GENERIC_RECORDING`, `motionLab.uploadWithoutAnalysis()` | 2.1.4 | UiKitSample (`genericRecording()`) |
+| `motionLab.rescheduleAutoStop(…)` | 2.1.2 | — |
+| `OSTRecordingConfiguration.onInstructionsRequested`, `tagFields` | 2.2.2 / 2.3.0 | — (see UiKitSample README) |
+
+UiKitSample now also launches the 6-minute walk, 2-minute walk and Stairs flows, which exist since
+2.0. For the full list, see the SDK changelog and the
+[documentation](https://glorious-caboc-cd3.notion.site/onestep-collect-for-android).
