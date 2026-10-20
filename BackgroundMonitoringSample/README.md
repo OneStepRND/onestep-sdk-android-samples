@@ -2,9 +2,9 @@
 
 ## Versioning
 
-![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
+![Commercial License](https://img.shields.io/badge/license-Commercial-green.svg)
 ![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)
-![SDK](https://img.shields.io/badge/sdk-2.0.0-red.svg)
+![SDK](https://img.shields.io/badge/sdk-2.3.0-red.svg)
 
 BackgroundMonitoringSample is an app demonstrating the OneStep core SDK collecting background sensor data and syncing it to produce background recording records.
 
@@ -15,9 +15,6 @@ BackgroundMonitoringSample is an app demonstrating the OneStep core SDK collecti
 That guide covers SDK setup, identity verification, the monitoring lifecycle (`enable` vs
 `optIn`/`optOut`), notification configuration, daily summaries, and the events stream. This sample
 links back to it from the relevant code.
-
-> `migration-guide-ios-developer.md` in this folder is a v1→v2 API reference aimed at **iOS**
-> developers porting from the Android SDK. Android consumers can ignore it.
 
 ## Features
 
@@ -36,6 +33,18 @@ links back to it from the relevant code.
 - Notification style picker on the Monitoring screen demonstrates the three ways to render the
   foreground-service notification (see below). Picking a style updates the live notification
   immediately and is remembered across app restarts.
+
+- "Allow dismissing the notification" switch demonstrates `setMonitoringNotificationDismissible`
+  (see below).
+
+## Where to look
+
+| What | File |
+|---|---|
+| Initialize, identify, `enable()` monitoring | [`BgMonitoringSampleApplication.kt`](app/src/main/java/com/onestep/backgroundmonitoringsample/BgMonitoringSampleApplication.kt) |
+| `optIn()` / `optOut()`, monitoring state, daily summaries | [`MainViewModel.kt`](app/src/main/java/com/onestep/backgroundmonitoringsample/viewmodels/MainViewModel.kt) |
+| The three notification styles | [`MonitoringNotifications.kt`](app/src/main/java/com/onestep/backgroundmonitoringsample/notifications/MonitoringNotifications.kt) |
+| Runtime permission requests | [`MainScreen.kt`](app/src/main/java/com/onestep/backgroundmonitoringsample/screens/MainScreen.kt) |
 
 ![Alt text](https://github.com/OneStepRND/onestep-sdk-android-samples/blob/main/BackgroundMonitoringSample/backgroundTutorial.gif)
 
@@ -71,15 +80,15 @@ monitoring.setCustomMonitoringNotification {
 }
 ```
 
-`setCustomMonitoringNotification` **persists** the config but does not refresh a notification that
-is already showing — the foreground service only rebuilds it from the persisted config the next
-time it (re)starts. So:
+`setCustomMonitoringNotification` persists the config and repaints the live notification
+immediately when monitoring is active. The SDK restores the config whenever the service restarts,
+including after a reboot or an app update.
 
-- Call it **before** opting in, so the first notification already uses your config. This sample
-  re-applies the user's last choice at startup (`BgMonitoringSampleApplication`).
-- To change the style while monitoring is **active** (as the in-app picker does), the sample sends
-  the always-on service its `ACTION_UPDATE_NOTIFICATION` command, which makes it rebuild the live
-  notification immediately. (`optOut()`/`optIn()` do **not** reliably rebuild it.)
+- Call it from `Application.onCreate()`, right after `initialize()` succeeds. It does not need an
+  identified patient. `onCreate()` runs in every process, so a `native(...)` notification also
+  survives a headless restart of the service. This sample re-applies the user's last choice there
+  (`BgMonitoringSampleApplication`).
+- To change the style at runtime, call it again. You do not need to restart monitoring.
 
 The selected style is persisted in `SharedPreferences`, so the picker and the live notification stay
 in sync across app restarts.
@@ -101,8 +110,10 @@ monitoring.setCustomMonitoringNotification {
 }
 ```
 
-**2. Custom** — the SDK renders a richer notification showing your app name and live progress
-toward a daily step goal. The SDK fills in the current step count for you.
+**2. Custom** — the SDK renders a richer notification with live progress toward a daily step goal.
+The SDK fills in the current step count for you. `title` replaces the `appName` header and `text`
+adds one line under it (SDK 2.2.2+). They are plain strings, not lambdas, because the SDK persists
+them to rebuild the notification after a restart.
 
 ```kotlin
 monitoring.setCustomMonitoringNotification {
@@ -110,6 +121,8 @@ monitoring.setCustomMonitoringNotification {
         appName = "Background Monitoring Sample",
         stepsGoal = 8_000,
         icon = R.drawable.ic_launcher_foreground,
+        title = "Your daily activity",
+        text = "Steps count toward your daily goal",
     )
 }
 ```
@@ -132,19 +145,33 @@ monitoring.setCustomMonitoringNotification {
 }
 ```
 
+### Letting users dismiss the notification
+
+By default, a swipe on the monitoring notification is undone at once. From SDK 2.2.0 you can let the
+user dismiss it:
+
+```kotlin
+monitoring.setMonitoringNotificationDismissible(true)
+val allowed = monitoring.isMonitoringNotificationDismissible // read it back for a settings UI
+```
+
+Monitoring keeps running while the notification is hidden. Android shows it again when the service
+restarts (reboot, app update, process restart). If you expose this as a setting, label it as
+permission to dismiss ("Allow dismissing the notification"), not as "Hide the notification".
+
 ### Requirements
 
 | Component | Version |
 |---|---|
 | Android API (min) | 26 |
-| Android API (target / compile) | 35 |
-| Android Gradle Plugin | 8.12.3 |
-| Kotlin | 2.0.21 |
-| Compose BOM | 2024.08.00 |
-| OneStep SDK (core) | 2.0.0 |
+| Android API (target / compile) | 36 |
+| Android Gradle Plugin | 9.0.0 (Gradle 9.1.0, JDK 17+) |
+| Kotlin | 2.2.10 |
+| Compose BOM | 2026.03.00 |
+| OneStep SDK (core) | 2.3.0 |
 
-These values come from this module's `gradle/libs.versions.toml` — the source of truth for what
-builds. Update both together if you bump versions.
+These values come from this module's `gradle/libs.versions.toml` and `app/build.gradle.kts` — the
+source of truth for what builds. Update them together if you bump versions.
 
 ### Installation
 
@@ -184,4 +211,4 @@ that id. If the digest is wrong, the SDK fails to connect with HTTP 403 `invalid
 
 ## Support
 
-For support, additional information, or to report issues, contact `ziv@onestep.co`.
+For support, additional information, or to report issues, contact `shahar@onestep.co`.
