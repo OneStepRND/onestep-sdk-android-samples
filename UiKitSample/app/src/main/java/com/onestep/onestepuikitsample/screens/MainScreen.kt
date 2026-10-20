@@ -21,22 +21,23 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.onestep.android.uikit.OSTTheme
 import co.onestep.android.uikit.ui.theme.OSTThemeManager
 import co.onestep.android.uikit.ui.theme.bad
 import co.onestep.android.uikit.ui.theme.goodBackground
 import co.onestep.android.uikit.ui.theme.gray300
 import co.onestep.android.uikit.ui.theme.med
-import com.onestep.onestepuikitsample.MainViewModel
 import com.onestep.onestepuikitsample.R
 import com.onestep.onestepuikitsample.ui.componenets.ColorsDropDown
 import com.onestep.onestepuikitsample.ui.componenets.FontDropDown
@@ -51,9 +52,14 @@ fun MainScreen(
     onStartRecording: (RecordingFlow) -> Unit,
     onStartPermissionsFlow: () -> Unit,
     onStartCareLogActivity: () -> Unit,
-    viewModel: MainViewModel
+    currentFont: FontFamily,
+    onFontChange: (FontFamily) -> Unit,
+    colorsDropdownExpanded: Boolean,
+    onColorsDropdownExpandedChange: (Boolean) -> Unit,
+    fontsDropdownExpanded: Boolean,
+    onFontsDropdownExpandedChange: (Boolean) -> Unit,
 ) {
-    val primary = OSTTheme.colorScheme.collectAsState().value.primary
+    val primary = OSTTheme.colorScheme.collectAsStateWithLifecycle().value.primary
 
     Column(modifier.padding(32.dp).verticalScroll(rememberScrollState())) {
         Text(
@@ -62,7 +68,7 @@ fun MainScreen(
             fontSize = 40.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Start,
-            fontFamily = viewModel.currentFont.value,
+            fontFamily = currentFont,
         )
 
         RecordingFlow.entries.forEach { flow ->
@@ -92,14 +98,15 @@ fun MainScreen(
             fontSize = 40.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Start,
-            fontFamily = viewModel.currentFont.value,
+            fontFamily = currentFont,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
         ColorsDropDown(
             color = primary,
-            font = viewModel.currentFont.value,
-            expanded = viewModel.colorsDropdownExpanded,
+            font = currentFont,
+            expanded = colorsDropdownExpanded,
+            onExpandedChange = onColorsDropdownExpandedChange,
             listOf(goodBackground, med, bad, gray300),
         ) { selectedColor ->
 
@@ -114,12 +121,13 @@ fun MainScreen(
         }
 
         FontDropDown(
-            viewModel.currentFont,
-            viewModel.fontsDropdownExpanded,
+            currentFont,
+            fontsDropdownExpanded,
+            onFontsDropdownExpandedChange,
             // Observe the creation of those font families in the Font.kt file
             listOf(NoirFontFamily, FunnyToysFontFamily, ParadiseFontFamily, VintageBrushFontFamily),
         ) { selectedFont ->
-            viewModel.currentFont.value = selectedFont
+            onFontChange(selectedFont)
 
             /// To change font of the theme, use the following code
             /// Create a Font.kt file with the desired font families
@@ -160,4 +168,27 @@ private fun MainButton(
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MainScreenPreview() {
+    MainScreen(
+        modifier = Modifier,
+        onStartRecording = {},
+        onStartPermissionsFlow = {},
+        onStartCareLogActivity = {},
+        currentFont = NoirFontFamily,
+        onFontChange = {},
+        colorsDropdownExpanded = false,
+        onColorsDropdownExpandedChange = {},
+        fontsDropdownExpanded = false,
+        onFontsDropdownExpandedChange = {},
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MainButtonPreview() {
+    MainButton("Walk recording", R.drawable.ic_walks, Color.Blue) {}
 }

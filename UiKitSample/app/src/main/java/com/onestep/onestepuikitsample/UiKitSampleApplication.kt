@@ -18,11 +18,23 @@ class UiKitSampleApplication : Application() {
     private val TAG = UiKitSampleApplication::class.simpleName
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    lateinit var oneStepSdk: OneStep
+    // Null when OneStep.initialize() failed. MainActivity then shows an error instead of crashing.
+    var oneStepSdk: OneStep? = null
         private set
+
+    // local.properties keys left blank in this build. setPatient() cannot succeed without them,
+    // so MainActivity shows a setup message instead of a late "session lost" error.
+    val missingCredentials: List<String> = buildList {
+        if (BuildConfig.CLIENT_TOKEN.isBlank()) add("onestep.clientToken")
+        if (BuildConfig.CUSTOMER_PATIENT_ID.isBlank()) add("onestep.customerPatientId")
+    }
 
     override fun onCreate() {
         super.onCreate()
+        if (missingCredentials.isNotEmpty()) {
+            // Log only the key names, never credential values.
+            Log.e(TAG, "Missing in local.properties: ${missingCredentials.joinToString()}")
+        }
         OSTTheme.font = NoirFontFamily
 
         OneStep.initialize(
@@ -39,10 +51,12 @@ class UiKitSampleApplication : Application() {
     }
 
     suspend fun connectUser() {
+        val oneStep = oneStepSdk ?: return
+        if (missingCredentials.isNotEmpty()) return
         // Credentials come from local.properties via BuildConfig, so no keys live in source.
         // identityVerification is the precomputed HMAC digest of customerPatientId (or blank);
         // pass null when blank to connect without identity verification. See the README "API Keys".
-        oneStepSdk.setPatient(
+        oneStep.setPatient(
             apiKey = BuildConfig.CLIENT_TOKEN,
             customerPatientId = BuildConfig.CUSTOMER_PATIENT_ID,
             identityVerification = BuildConfig.IDENTITY_VERIFICATION.ifBlank { null },

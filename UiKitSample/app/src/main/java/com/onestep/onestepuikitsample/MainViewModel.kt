@@ -11,7 +11,7 @@ class MainViewModel : ViewModel() {
     var sdkState by mutableStateOf<OSTIdentificationState>(OSTIdentificationState.Unidentified)
     var isConnecting by mutableStateOf(false)
 
-    var colorsDropdownExpanded = mutableStateOf(false)
-    var fontsDropdownExpanded = mutableStateOf(false)
-    var currentFont = mutableStateOf(OSTTheme.font)
+    var colorsDropdownExpanded by mutableStateOf(false)
+    var fontsDropdownExpanded by mutableStateOf(false)
+    var currentFont by mutableStateOf(OSTTheme.font)
 }

@@ -19,12 +19,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
+import co.onestep.android.core.OSTIdentificationState
+import co.onestep.android.core.OneStep
 import co.onestep.android.uikit.features.carlog.presentation.OSTCarelogActivity
 import co.onestep.android.uikit.features.permissions.OSTPermissionFlowActivity
 import co.onestep.android.uikit.features.recordFlow.configurations.OSTRecordingConfiguration
 import co.onestep.android.uikit.features.recordFlow.presentation.OSTRecordingFlowActivity
 import com.onestep.onestepuikitsample.screens.App
+import com.onestep.onestepuikitsample.screens.MISSING_CREDENTIALS_MESSAGE
 import com.onestep.onestepuikitsample.screens.RecordingFlow
+import com.onestep.onestepuikitsample.screens.SDK_INIT_FAILED_MESSAGE
+import com.onestep.onestepuikitsample.screens.SetupError
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -43,18 +48,38 @@ class MainActivity : AppCompatActivity() {
         if (supportActionBar != null) {
             supportActionBar?.hide()
         }
-        collectSDKState()
+        val app = application as UiKitSampleApplication
+        val oneStep = app.oneStepSdk
+        // Fail fast: without an initialized SDK or credentials, nothing below can work.
+        if (oneStep == null || app.missingCredentials.isNotEmpty()) {
+            val message = if (oneStep == null) SDK_INIT_FAILED_MESSAGE else MISSING_CREDENTIALS_MESSAGE
+            setContent {
+                Scaffold { padding -> SetupError(message = message, modifier = Modifier.padding(padding)) }
+            }
+            return
+        }
+        collectSDKState(oneStep)
 
         setContent {
             val scope = rememberCoroutineScope()
             val snackbarHostState = remember { SnackbarHostState() }
             val context = LocalContext.current
+            val sdkState = viewModel.sdkState
             Scaffold(
                 snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                 content = { padding ->
                     App(
                         modifier = Modifier.padding(padding).background(color = MaterialTheme.colorScheme.surface),
-                        viewModel,
+                        isConnecting = viewModel.isConnecting,
+                        isIdentified = sdkState is OSTIdentificationState.Identified,
+                        sessionLostMessage = (sdkState as? OSTIdentificationState.Lost)
+                            ?.let { "Session lost: ${it.cause.message}" },
+                        currentFont = viewModel.currentFont,
+                        onFontChange = { viewModel.currentFont = it },
+                        colorsDropdownExpanded = viewModel.colorsDropdownExpanded,
+                        onColorsDropdownExpandedChange = { viewModel.colorsDropdownExpanded = it },
+                        fontsDropdownExpanded = viewModel.fontsDropdownExpanded,
+                        onFontsDropdownExpandedChange = { viewModel.fontsDropdownExpanded = it },
                         connect = { connect() },
                         onStartRecording = { flow -> startRecordingFlow(flow.toConfiguration()) },
                         onStartPermissionsFlow = {
@@ -111,10 +136,9 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun collectSDKState() {
-        val app = application as UiKitSampleApplication
+    private fun collectSDKState(oneStep: OneStep) {
         lifecycleScope.launch {
-            app.oneStepSdk.identificationState.collect { state ->
+            oneStep.identificationState.collect { state ->
                 viewModel.sdkState = state
                 viewModel.isConnecting = false
             }
