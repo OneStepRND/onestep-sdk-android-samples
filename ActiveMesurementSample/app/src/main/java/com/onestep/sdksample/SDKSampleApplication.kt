@@ -19,11 +19,23 @@ class SDKSampleApplication : Application() {
     private val TAG: String? = SDKSampleApplication::class.simpleName
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    lateinit var oneStepSdk: OneStep
+    // Null when OneStep.initialize() failed. MainActivity then shows an error instead of crashing.
+    var oneStepSdk: OneStep? = null
         private set
+
+    // local.properties keys left blank in this build. setPatient() cannot succeed without them,
+    // so MainActivity shows a setup message instead of a late "session lost" error.
+    val missingCredentials: List<String> = buildList {
+        if (BuildConfig.CLIENT_TOKEN.isBlank()) add("onestep.clientToken")
+        if (BuildConfig.CUSTOMER_PATIENT_ID.isBlank()) add("onestep.customerPatientId")
+    }
 
     override fun onCreate() {
         super.onCreate()
+        if (missingCredentials.isNotEmpty()) {
+            // Log only the key names, never credential values.
+            Log.e(TAG, "Missing in local.properties: ${missingCredentials.joinToString()}")
+        }
         OneStep.initialize(
             application = this,
             onAuthLost = {
@@ -62,12 +74,15 @@ class SDKSampleApplication : Application() {
         }
     }
 
-    suspend fun connectUser() {
+    /** Identifies the user. Returns true when setPatient() succeeded. */
+    suspend fun connectUser(): Boolean {
+        val oneStep = oneStepSdk ?: return false
+        if (missingCredentials.isNotEmpty()) return false
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         // Credentials come from local.properties via BuildConfig, so no keys live in source.
         // identityVerification is the precomputed HMAC digest of customerPatientId (or blank);
         // pass null when blank to connect without identity verification. See the README "Keys".
-        oneStepSdk.setPatient(
+        return oneStep.setPatient(
             apiKey = BuildConfig.CLIENT_TOKEN,
             customerPatientId = BuildConfig.CUSTOMER_PATIENT_ID,
             identityVerification = BuildConfig.IDENTITY_VERIFICATION.ifBlank { null },
@@ -79,9 +94,9 @@ class SDKSampleApplication : Application() {
             },
         ).onSuccess {
             Log.d(TAG, "SDK identified successfully")
-            configureRecordingNotification(oneStepSdk)
+            configureRecordingNotification(oneStep)
         }.onError { error ->
             Log.e(TAG, "SDK setPatient failed: ${error.cause.message}")
-        }
+        }.isSuccess
     }
 }
