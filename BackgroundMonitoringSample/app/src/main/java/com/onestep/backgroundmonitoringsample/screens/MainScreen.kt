@@ -19,7 +19,10 @@ import com.onestep.backgroundmonitoringsample.ui.model.MonitoringUiState
 import com.onestep.backgroundmonitoringsample.ui.model.NotificationStyle
 import com.onestep.backgroundmonitoringsample.ui.model.ScreenState
 
-
+/**
+ * Owns the permission state, which needs an Activity, and the opt-in that follows the grant.
+ * Everything visible is in [MainScreenContent].
+ */
 @Composable
 @OptIn(ExperimentalPermissionsApi::class)
 fun MainScreen(
@@ -34,6 +37,8 @@ fun MainScreen(
     onSelectNotificationStyle: (NotificationStyle) -> Unit,
     onNotificationDismissibleChange: (Boolean) -> Unit,
     onLoadRecords: () -> Unit,
+    isIdentified: Boolean,
+    onSync: () -> Unit,
 ) {
     // Permission for activity recognition is required to use the SDK
     val activityRecognitionPermissionState = rememberMultiplePermissionsState(
@@ -54,6 +59,39 @@ fun MainScreen(
         }
     }
 
+    MainScreenContent(
+        screenState = screenState,
+        monitoringState = monitoringState,
+        notificationStyle = notificationStyle,
+        notificationDismissible = notificationDismissible,
+        records = records,
+        onScreenStateChange = onScreenStateChange,
+        onOptIn = onOptIn,
+        onOptOut = onOptOut,
+        onSelectNotificationStyle = onSelectNotificationStyle,
+        onNotificationDismissibleChange = onNotificationDismissibleChange,
+        onLoadRecords = onLoadRecords,
+        isIdentified = isIdentified,
+        onSync = onSync,
+    )
+}
+
+@Composable
+private fun MainScreenContent(
+    screenState: ScreenState,
+    monitoringState: MonitoringUiState,
+    notificationStyle: NotificationStyle,
+    notificationDismissible: Boolean,
+    records: List<ActivityItem>,
+    onScreenStateChange: (ScreenState) -> Unit,
+    onOptIn: () -> Unit,
+    onOptOut: () -> Unit,
+    onSelectNotificationStyle: (NotificationStyle) -> Unit,
+    onNotificationDismissibleChange: (Boolean) -> Unit,
+    onLoadRecords: () -> Unit,
+    isIdentified: Boolean,
+    onSync: () -> Unit,
+) {
     BackHandler {
         if (screenState is ScreenState.Records) {
             onScreenStateChange(ScreenState.Initialized)
@@ -84,6 +122,8 @@ fun MainScreen(
                     onShowRecords = {
                         onScreenStateChange(ScreenState.Records)
                     },
+                    isIdentified = isIdentified,
+                    onSync = onSync,
                 )
             }
 
@@ -98,7 +138,7 @@ fun MainScreen(
 @Preview(showBackground = true)
 @Composable
 private fun MainScreenPreview() {
-    MainScreen(
+    MainScreenContent(
         screenState = ScreenState.Initialized,
         monitoringState = MonitoringUiState(),
         notificationStyle = NotificationStyle.DEFAULT,
@@ -110,13 +150,15 @@ private fun MainScreenPreview() {
         onSelectNotificationStyle = {},
         onNotificationDismissibleChange = {},
         onLoadRecords = {},
+        isIdentified = true,
+        onSync = {},
     )
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun MainScreenErrorPreview() {
-    MainScreen(
+    MainScreenContent(
         screenState = ScreenState.Error("SDK session lost: sample error"),
         monitoringState = MonitoringUiState(),
         notificationStyle = NotificationStyle.DEFAULT,
@@ -128,5 +170,7 @@ private fun MainScreenErrorPreview() {
         onSelectNotificationStyle = {},
         onNotificationDismissibleChange = {},
         onLoadRecords = {},
+        isIdentified = true,
+        onSync = {},
     )
 }
