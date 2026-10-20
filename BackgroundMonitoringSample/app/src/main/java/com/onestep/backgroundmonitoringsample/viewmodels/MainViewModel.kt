@@ -32,6 +32,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     var screenState by mutableStateOf<ScreenState>(ScreenState.Loading)
 
+    // Mirrors OneStep.identificationState, so composables do not read the SDK themselves.
+    var isIdentified by mutableStateOf(false)
+        private set
+
     private val _monitoringUiState = MutableStateFlow(MonitoringUiState())
     val monitoringUiState: StateFlow<MonitoringUiState> = _monitoringUiState
 
@@ -104,18 +108,24 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun start() {
         viewModelScope.launch {
             oneStep.identificationState.collect { state ->
+                isIdentified = state is OSTIdentificationState.Identified
                 when (state) {
                     is OSTIdentificationState.Identified -> {
                         collectMonitoringState()
                         screenState = ScreenState.Initialized
                     }
                     is OSTIdentificationState.Lost ->
-                        screenState = ScreenState.Error("SDK session lost: ${state.cause.message}")
+                        screenState = ScreenState.Error("Session lost: ${state.cause.message}")
                     OSTIdentificationState.Unidentified ->
                         screenState = ScreenState.Loading
                 }
             }
         }
+    }
+
+    /** Uploads pending OneStep data now instead of waiting for the SDK's background sync. */
+    fun sync() {
+        viewModelScope.launch { oneStep.sync() }
     }
 
     fun optInToMonitoring() {

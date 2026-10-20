@@ -53,6 +53,8 @@ class MainActivity : ComponentActivity() {
                     onSelectNotificationStyle = viewModel::setNotificationStyle,
                     onNotificationDismissibleChange = viewModel::setNotificationDismissible,
                     onLoadRecords = viewModel::loadRecords,
+                    isIdentified = viewModel.isIdentified,
+                    onSync = viewModel::sync,
                 )
             }
         }

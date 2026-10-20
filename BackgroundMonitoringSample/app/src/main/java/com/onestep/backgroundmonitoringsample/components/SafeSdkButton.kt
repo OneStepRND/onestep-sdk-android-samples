@@ -8,28 +8,26 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.material3.Text
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.Icons
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import co.onestep.android.core.OSTIdentificationState
-import co.onestep.android.core.OneStep
-import co.onestep.android.core.getOr
 
 @Composable
 fun SafeSDKButton(
     modifier: Modifier = Modifier,
+    isIdentified: Boolean,
     icon: ImageVector,
     action: () -> Unit,
     text:  @Composable () -> Unit
@@ -40,10 +38,7 @@ fun SafeSDKButton(
         text = { text() },
         icon = icon,
         action = {
-            val oneStep = OneStep.getInstance().getOr(null)
-            if (oneStep == null ||
-                oneStep.identificationState.value is OSTIdentificationState.Unidentified
-            ) {
+            if (!isIdentified) {
                 Toast.makeText(context, "SDK not identified", Toast.LENGTH_SHORT).show()
             } else {
                 action.invoke()
@@ -88,7 +83,7 @@ private fun MainButton(
 @Preview(showBackground = true)
 @Composable
 private fun SafeSDKButtonPreview() {
-    SafeSDKButton(icon = Icons.Default.PlayArrow, action = {}) {
+    SafeSDKButton(isIdentified = true, icon = Icons.Default.PlayArrow, action = {}) {
         Text("Start bg monitoring")
     }
 }
