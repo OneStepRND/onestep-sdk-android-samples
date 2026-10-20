@@ -177,7 +177,8 @@ source of truth for what builds. Update them together if you bump versions.
 
 1. Clone this repo (or download the code) and open this module in Android Studio.
 2. **Add your credentials to `local.properties` first** (see [Keys](#keys)) — without them the SDK
-   fails to connect and the app shows "SDK session lost".
+   cannot connect. The app then shows which `local.properties` keys are missing, or
+   "Could not connect (<ERROR_CODE>)" if a key is wrong.
 3. Run on a **physical device** — the emulator has no motion sensors, so you won't get real
    background records or analysis.
 
