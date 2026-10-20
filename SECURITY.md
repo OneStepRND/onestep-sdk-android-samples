@@ -33,3 +33,10 @@ patient identifiers must never be committed, in code, configuration, docs, issue
 1. Revoke or rotate it on the OneStep side first. Deleting the commit does not make a pushed secret
    safe: it can already be in forks, clones and caches.
 2. Then remove it from the code and contact `shahar@onestep.co`.
+
+## When the secret scan fails after a force-push
+
+The scan checks only the commits a push adds. A force-push to `main` leaves it nothing new it can
+trust, so the check fails on purpose instead of passing unchecked. Scan the branch by hand
+(`gitleaks git --redact --config .gitleaks.toml`), confirm only the known historical findings
+appear, and note the result on the force-push.
