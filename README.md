@@ -46,9 +46,10 @@ The OneStep SDK is currently available exclusively to our customers. We provide 
 | OneStep SDK (core / uikit) | 2.3.0 |
 
 All three samples use the same toolchain. Each sample has its own `gradle/libs.versions.toml`, so
-bump versions in all three together. The samples run AGP 9 in compatibility mode
-(`android.builtInKotlin=false`, `android.newDsl=false` in `gradle.properties`); the OneStep SDK
-itself does not need these flags.
+bump versions in all three together. The samples use AGP 9 defaults: built-in Kotlin (no
+`org.jetbrains.kotlin.android` plugin, only the Compose compiler plugin) and the new DSL, with no
+compatibility opt-outs in `gradle.properties`. You can copy the build files into an AGP 9 project
+as-is.
 
 ### Installation
 
