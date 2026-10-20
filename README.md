@@ -90,12 +90,12 @@ class MyApplication : Application() {
             application = this,
             onAuthLost = { error ->
                 // Called when the session expires (401/403)
-                Log.w("OneStep", "Auth lost: ${error.type}")
+                Log.w("OneStep", "Auth lost: ${error.type.name}")
             },
         ).onSuccess { oneStep ->
             oneStepSdk = oneStep
         }.onError { error ->
-            Log.e("OneStep", "init failed: ${error.cause.type}")
+            Log.e("OneStep", "init failed: ${error.cause.type.name}")
         }
     }
 
@@ -114,29 +114,35 @@ class MyApplication : Application() {
             },
         ).onError { error ->
             // error.cause.type is OSTError.Type (InvalidClientToken, NetworkError, …)
-            Log.e("OneStep", "setPatient failed: ${error.cause.type}")
+            Log.e("OneStep", "setPatient failed: ${error.cause.type.name}")
         }
     }
 }
 ```
 
-Log and show only `error.cause.type`, never `error.cause.message`: the message can carry the
-server's response body. The SDK follows the same rule in its own logs.
+Log and show only `error.cause.type.name`, a stable code such as `INVALID_CLIENT_TOKEN` or
+`SERVER_ERROR`. Never log or show `error.cause.message`, and never print the type object itself:
+`OSTError.Type.ServerError` is a data class whose `toString()` includes the server's response
+message.
 
 ### Observe SDK state
 
 `identificationState` is the single source of truth for whether a patient is bound.
 
 ```kotlin
-val oneStep = (application as MyApplication).oneStepSdk ?: return // initialize failed
-lifecycleScope.launch {
-    oneStep.identificationState.collect { state ->
-        when (state) {
-            // Also the flow's first value, even for a patient restored from a previous run, so
-            // collect the flow rather than reading .value once right after initialize().
-            OSTIdentificationState.Unidentified -> { /* SDK is initialized, no user bound */ }
-            is OSTIdentificationState.Identified -> { /* state.patientId is identified */ }
-            is OSTIdentificationState.Lost -> { /* state.cause describes the loss (401/403, expired, …) */ }
+// In your Activity:
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    val oneStep = (application as MyApplication).oneStepSdk ?: return // initialize failed
+    lifecycleScope.launch {
+        oneStep.identificationState.collect { state ->
+            when (state) {
+                // Can also be the first value for a patient restored from a previous run, so
+                // collect the flow rather than reading .value once right after initialize().
+                OSTIdentificationState.Unidentified -> { /* SDK is initialized, no user bound */ }
+                is OSTIdentificationState.Identified -> { /* state.patientId is identified */ }
+                is OSTIdentificationState.Lost -> { /* state.cause describes the loss (401/403, expired, …) */ }
+            }
         }
     }
 }

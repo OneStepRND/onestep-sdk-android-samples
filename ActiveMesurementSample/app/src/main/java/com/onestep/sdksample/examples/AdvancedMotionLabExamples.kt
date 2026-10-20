@@ -72,7 +72,7 @@ suspend fun enrichWithInsightsAndNorms(measurement: OSTMotionMeasurement) {
             }
         }
         is OSTResult.Error -> {
-            Log.e(TAG, "Failed to fetch insights: ${insights.cause.type}")
+            Log.e(TAG, "Failed to fetch insights: ${insights.cause.type.name}")
         }
     }
 }
