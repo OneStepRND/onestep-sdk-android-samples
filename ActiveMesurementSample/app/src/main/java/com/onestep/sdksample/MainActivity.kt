@@ -50,10 +50,10 @@ class MainActivity : ComponentActivity() {
                     connect = {
                         coroutineScope.launch {
                             viewModel.isConnecting = true
-                            app.connectUser()
-                            // Also clears the spinner when setPatient() failed and the state
-                            // stayed Unidentified.
-                            viewModel.isConnecting = false
+                            // On success the identificationState collector clears the spinner once
+                            // the SDK reports Identified. Clear it here only on failure, so the
+                            // "Identify user" screen never flashes between the two.
+                            if (!app.connectUser()) viewModel.isConnecting = false
                         }
                     },
                     disconnect = {
