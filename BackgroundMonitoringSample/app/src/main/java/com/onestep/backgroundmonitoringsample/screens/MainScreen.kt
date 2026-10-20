@@ -159,7 +159,7 @@ private fun MainScreenPreview() {
 @Composable
 private fun MainScreenErrorPreview() {
     MainScreenContent(
-        screenState = ScreenState.Error("SDK session lost: sample error"),
+        screenState = ScreenState.Error("Session lost: sample error"),
         monitoringState = MonitoringUiState(),
         notificationStyle = NotificationStyle.DEFAULT,
         notificationDismissible = false,
