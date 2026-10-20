@@ -1,0 +1,52 @@
+name: Build samples
+
+# Builds every sample the way a client would after cloning: no local.properties and no
+# credentials. BuildConfig credential fields fall back to empty strings, so the apps compile but
+# do not connect. CI never needs or receives OneStep credentials.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: ${{ matrix.sample }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        sample: [ActiveMesurementSample, BackgroundMonitoringSample, UiKitSample]
+    defaults:
+      run:
+        working-directory: ${{ matrix.sample }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build, test and lint
+        run: ./gradlew :app:assembleDebug :app:assembleRelease :app:testDebugUnitTest :app:lintDebug
+
+      - name: Upload lint report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-${{ matrix.sample }}
+          path: ${{ matrix.sample }}/app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore

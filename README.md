@@ -2,6 +2,7 @@
 
 ## Versioning
 
+[![Build samples](https://github.com/OneStepRND/onestep-sdk-android-samples/actions/workflows/build.yml/badge.svg)](https://github.com/OneStepRND/onestep-sdk-android-samples/actions/workflows/build.yml)
 ![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)
 ![Commercial License](https://img.shields.io/badge/license-Commercial-green.svg)
 ![Core](https://img.shields.io/badge/core-2.3.0-red.svg)
@@ -22,6 +23,21 @@ Each sample is a standalone Gradle project with its own README (setup, keys, and
 | [`UiKitSample`](UiKitSample/README.md) | Drop-in OneStep **UIKit** screens (recording flow, summary, carelog, permission flow). |
 
 All three follow the same setup pattern: credentials live in a gitignored `local.properties` and are exposed via `BuildConfig` (see each sample's README), so no keys are committed.
+
+## Quick start
+
+1. Clone the repo and open one sample folder (for example `ActiveMesurementSample/`) in Android
+   Studio. Each sample is its own Gradle project.
+2. Copy the credentials template and fill in your values:
+
+   ```bash
+   cp local.properties.example local.properties
+   ```
+
+   `local.properties` is gitignored. **Never commit credentials** or put them anywhere else in the
+   repo; see [SECURITY.md](SECURITY.md). For SDK access and credentials, contact
+   `shahar@onestep.co`.
+3. Run the app on a physical device. The emulator has no motion sensors.
 
 ## Features
 
@@ -125,6 +141,17 @@ oneStepSdk.clearPatient()
 
 `clearPatient()` clears credentials, stops monitoring, and transitions `identificationState` back to `Unidentified`. SDK initialization is preserved — you don't need to call `initialize()` again before the next `setPatient()`.
 
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| `setPatient` fails right away (see Logcat), or the sample shows a setup screen | `local.properties` is missing, or `onestep.clientToken` / `onestep.customerPatientId` is blank. Copy `local.properties.example`, fill it in, then rebuild. |
+| `setPatient` fails with HTTP 403 `invalid hmac_digest` | `onestep.identityVerification` does not match `onestep.customerPatientId`. Recompute the digest for that exact id, or leave it blank while testing. |
+| A recording does not start | On Android 10+ the user must grant Physical activity (`ACTIVITY_RECOGNITION`). Since SDK 2.3.0, `start()` returns `MissingPermission` instead of throwing. |
+| No walk score on the emulator | The emulator has no motion sensors. Use a physical device. |
+| Background monitoring stops on some phones | Some manufacturers stop background apps aggressively. Ask the user to allow unrestricted battery use for the app, and keep notifications allowed (Android 13+). |
+| Play Console asks about microphone or location | The SDK merges these permissions into your manifest. Declare them in the Data safety form; see Merged Manifest in Android Studio. |
+
 ## Upgrading from 2.0.x to 2.3.0
 
 Typical integrations (initialize, `setPatient`, MotionLab, Monitoring, UIKit flows) compile
@@ -165,6 +192,16 @@ New APIs since 2.0, and where this repo shows them:
 UiKitSample now also launches the 6-minute walk, 2-minute walk and Stairs flows, which exist since
 2.0. For the full list, see the SDK changelog and the
 [documentation](https://glorious-caboc-cd3.notion.site/onestep-collect-for-android).
+
+## Repository layout
+
+| Path | What it is |
+|---|---|
+| `ActiveMesurementSample/`, `BackgroundMonitoringSample/`, `UiKitSample/` | Standalone sample projects, each with a README and `local.properties.example` |
+| `.github/workflows/` | CI: builds every sample, and scans every change for secrets |
+| `renovate.json` | Weekly dependency PRs; OneStep SDK releases are bumped in all samples at once |
+| `AGENTS.md` | Instructions for AI coding assistants |
+| `SECURITY.md` | The no-credentials rule and how to report a security issue |
 
 ## Support
 

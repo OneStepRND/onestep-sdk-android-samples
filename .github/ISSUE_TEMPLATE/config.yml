@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: OneStep SDK documentation
+    url: https://glorious-caboc-cd3.notion.site/onestep-collect-for-android
+    about: Setup, identity verification, MotionLab, Monitoring, Insights and UIKit.
