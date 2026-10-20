@@ -12,7 +12,7 @@ or build it from its own folder. There is no root Gradle build.
 | Folder | Shows |
 |---|---|
 | `QuickstartSample/` | Start here. Core SDK, minimal: initialize, `setPatient`, a 30-second walk, its walk score |
-| `ActiveMesurementSample/` | Core SDK: initialize, `setPatient`, record a walk, analyze it |
+| `ActiveMeasurementSample/` | Core SDK: initialize, `setPatient`, record a walk, analyze it |
 | `BackgroundMonitoringSample/` | Core SDK: background monitoring, daily summaries, notifications |
 | `UiKitSample/` | UIKit: prebuilt recording flows, summary, carelog, permissions, theming |
 
