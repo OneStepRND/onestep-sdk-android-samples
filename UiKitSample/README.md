@@ -88,7 +88,7 @@ suspend function returning an `OSTResult<Unit>` you should branch on (see `UiKit
 // 1. Initialize once in Application.onCreate()
 OneStep.initialize(
     application = this,
-    onAuthLost = { error -> Log.w("OneStep", "Auth lost: ${error.message}") },
+    onAuthLost = { error -> Log.w("OneStep", "Auth lost: ${error.type}") },
 ).onSuccess { oneStep ->
     // 2. Identify the user (call from a coroutine — setPatient is suspend).
     //    Credentials come from BuildConfig, sourced from local.properties.
@@ -96,7 +96,7 @@ OneStep.initialize(
         apiKey = BuildConfig.CLIENT_TOKEN,
         customerPatientId = BuildConfig.CUSTOMER_PATIENT_ID,
         identityVerification = BuildConfig.IDENTITY_VERIFICATION.ifBlank { null },
-    ).onError { error -> Log.e("OneStep", "identify failed: ${error.cause.message}") }
+    ).onError { error -> Log.e("OneStep", "identify failed: ${error.cause.type}") }
 }
 ```
 
