@@ -12,6 +12,9 @@ import com.onestep.backgroundmonitoringsample.notifications.MonitoringNotificati
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class BgMonitoringSampleApplication : Application() {
@@ -29,6 +32,11 @@ class BgMonitoringSampleApplication : Application() {
         if (BuildConfig.CLIENT_TOKEN.isBlank()) add("onestep.clientToken")
         if (BuildConfig.CUSTOMER_PATIENT_ID.isBlank()) add("onestep.customerPatientId")
     }
+
+    // Set when the automatic setPatient() below fails, so the UI can show why instead of loading
+    // forever. Holds the error type only: a server message can carry details we do not show.
+    private val _connectionError = MutableStateFlow<String?>(null)
+    val connectionError: StateFlow<String?> = _connectionError.asStateFlow()
 
     override fun onCreate() {
         super.onCreate()
@@ -72,6 +80,7 @@ class BgMonitoringSampleApplication : Application() {
             identityVerification = BuildConfig.IDENTITY_VERIFICATION.ifBlank { null },
         ).onSuccess {
             Log.d(TAG, "SDK identified successfully")
+            _connectionError.value = null
             val monitoring = oneStep.getMonitoring().getOr(null) ?: return@onSuccess
             // Step 3: Enable monitoring. enable() wires up the monitoring subsystem for this
             // session; it does NOT start collecting on its own. The user must then OPT IN
@@ -81,7 +90,8 @@ class BgMonitoringSampleApplication : Application() {
             // Docs: https://glorious-caboc-cd3.notion.site/onestep-collect-for-android
             monitoring.enable()
         }.onError { error ->
-            Log.e(TAG, "SDK setPatient failed: ${error.cause.message}")
+            Log.e(TAG, "SDK setPatient failed: ${error.cause.type}")
+            _connectionError.value = "Could not connect (${error.cause.type}). See Logcat and README → Keys."
         }
     }
 }
