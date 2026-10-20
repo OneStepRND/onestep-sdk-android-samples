@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Create
@@ -23,28 +24,23 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import co.onestep.android.core.OneStep
-import co.onestep.android.core.getOr
 import co.onestep.android.core.monitoring.OSTMonitoringPreference
 import co.onestep.android.core.monitoring.OSTMonitoringRuntimeState
 import com.onestep.backgroundmonitoringsample.components.SafeSDKButton
 import com.onestep.backgroundmonitoringsample.ui.model.MonitoringUiState
 import com.onestep.backgroundmonitoringsample.ui.model.NotificationStyle
-import kotlinx.coroutines.launch
 
 @Composable
 fun MonitoringScreen(
@@ -56,9 +52,10 @@ fun MonitoringScreen(
     notificationDismissible: Boolean,
     onNotificationDismissibleChange: (Boolean) -> Unit,
     onShowRecords: () -> Unit,
+    isIdentified: Boolean,
+    onSync: () -> Unit,
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val isActive = monitoringState.runtimeState is OSTMonitoringRuntimeState.Active
 
     Column(
@@ -86,6 +83,7 @@ fun MonitoringScreen(
         Spacer(modifier = Modifier.height(16.dp))
         SafeSDKButton(
             modifier = Modifier.align(CenterHorizontally),
+            isIdentified = isIdentified,
             icon = Icons.Default.PlayArrow,
             action = { if (isActive) onOptOut() else onOptIn() },
         ) {
@@ -120,11 +118,11 @@ fun MonitoringScreen(
         Spacer(modifier = Modifier.height(8.dp))
         SafeSDKButton(
             modifier = Modifier.align(CenterHorizontally),
+            isIdentified = isIdentified,
             icon = Icons.Default.Create,
             action = {
                 Toast.makeText(context, "Syncing OneStep data", Toast.LENGTH_SHORT).show()
-                val oneStep = OneStep.getInstance().getOr(null) ?: return@SafeSDKButton
-                coroutineScope.launch { oneStep.sync() }
+                onSync()
             },
         ) {
             Text(
@@ -265,6 +263,8 @@ private fun MonitoringScreenPreview() {
         notificationDismissible = false,
         onNotificationDismissibleChange = {},
         onShowRecords = {},
+        isIdentified = true,
+        onSync = {},
     )
 }
 
