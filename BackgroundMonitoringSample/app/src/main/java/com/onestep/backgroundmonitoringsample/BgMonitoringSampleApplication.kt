@@ -34,7 +34,7 @@ class BgMonitoringSampleApplication : Application() {
     }
 
     // Set when the automatic setPatient() below fails, so the UI can show why instead of loading
-    // forever. Holds the error type only: a server message can carry details we do not show.
+    // forever. Holds the error code only: a server message can carry details we do not show.
     private val _connectionError = MutableStateFlow<String?>(null)
     val connectionError: StateFlow<String?> = _connectionError.asStateFlow()
 
@@ -90,8 +90,10 @@ class BgMonitoringSampleApplication : Application() {
             // Docs: https://glorious-caboc-cd3.notion.site/onestep-collect-for-android
             monitoring.enable()
         }.onError { error ->
-            Log.e(TAG, "SDK setPatient failed: ${error.cause.type}")
-            _connectionError.value = "Could not connect (${error.cause.type}). See Logcat and README → Keys."
+            // type.name is a stable code such as INVALID_CLIENT_TOKEN. Never print the type itself:
+            // ServerError is a data class whose toString() includes the server's message.
+            Log.e(TAG, "SDK setPatient failed: ${error.cause.type.name}")
+            _connectionError.value = "Could not connect (${error.cause.type.name}). See README → Keys."
         }
     }
 }
