@@ -7,13 +7,18 @@ title = "OneStep sample apps"
 useDefault = true
 
 # A OneStep credential written as a string literal in code, instead of read from BuildConfig.
-# Placeholders that start with "<" (as in the READMEs) are allowed.
+# Covers camelCase and SNAKE_CASE names and an optional ": String" type. Placeholders that start
+# with "<" (as in the READMEs) are allowed. A literal customerPatientId is flagged on purpose: a
+# patient id is personal data, so samples use synthetic ids from local.properties only.
 [[rules]]
 id = "onestep-credential-literal"
 description = "OneStep credential hardcoded as a string literal"
-regex = '''(?i)\b(apiKey|clientToken|identityVerification|customerPatientId)\s*[=:]\s*"([^"<$\s][^"]{7,})"'''
+regex = '''(?i)\b(api_?key|client_?token|identity_?verification|customer_?patient_?id)(?:\s*:\s*String\??)?\s*[=:]\s*"([^"<$\s][^"]{7,})"'''
 secretGroup = 2
-keywords = ["apikey", "clienttoken", "identityverification", "customerpatientid"]
+keywords = [
+  "apikey", "api_key", "clienttoken", "client_token",
+  "identityverification", "identity_verification", "customerpatientid", "customer_patient_id",
+]
 
 # Documentation placeholders such as "your-client-token" or "api_key_789" are not credentials.
 [[rules.allowlists]]
@@ -23,6 +28,14 @@ regexes = [
   '''(?i)^api_key_\d{1,4}$''',
   '''(?i)^server_generated_hmac$''',
 ]
+
+# A credential baked into the build with buildConfigField instead of read from local.properties.
+[[rules]]
+id = "onestep-credential-buildconfig"
+description = "OneStep credential hardcoded in a buildConfigField"
+regex = '''buildConfigField\(\s*"String"\s*,\s*"(CLIENT_TOKEN|API_KEY|IDENTITY_VERIFICATION|CUSTOMER_PATIENT_ID)"\s*,\s*"\\"([^"\\$<][^"\\]{7,})\\""'''
+secretGroup = 2
+keywords = ["buildconfigfield"]
 
 # A real value in a properties file (for example, local.properties copied under another name).
 [[rules]]
