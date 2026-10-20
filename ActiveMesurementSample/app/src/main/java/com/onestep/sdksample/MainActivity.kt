@@ -51,6 +51,9 @@ class MainActivity : ComponentActivity() {
                         coroutineScope.launch {
                             viewModel.isConnecting = true
                             app.connectUser()
+                            // Also clears the spinner when setPatient() failed and the state
+                            // stayed Unidentified.
+                            viewModel.isConnecting = false
                         }
                     },
                     disconnect = {

@@ -1,7 +1,6 @@
 package com.onestep.sdksample.viewmodels
 
 import android.util.Log
-import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.onestep.android.core.OSTActivityType
@@ -34,10 +33,7 @@ import kotlinx.coroutines.launch
  * so the screen can do one `when` over it.
  *
  * Lifecycle: Idle → Recording → Finalizing → Uploading → Analyzing → Analyzed | Failed
- *
- * @Immutable: every state is a read-only snapshot, so Compose can skip the screen when it is unchanged.
  */
-@Immutable
 sealed interface RecorderUiState {
     data object Idle : RecorderUiState
     data object Recording : RecorderUiState
