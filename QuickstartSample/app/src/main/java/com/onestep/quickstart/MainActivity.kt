@@ -40,8 +40,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val state by viewModel.state.collectAsStateWithLifecycle()
-            // The SDK needs ACTIVITY_RECOGNITION to count steps. start() fails with
-            // MissingPermission without it, so ask right before recording.
+            // The SDK needs ACTIVITY_RECOGNITION to count steps, so ask right before recording.
+            // Without it, start() fails with MissingPermission on Android 14+. On Android 10-13
+            // the recording starts but counts no steps.
             val permissionLauncher = rememberLauncherForActivityResult(RequestPermission(), viewModel::recordWalk)
             MaterialTheme {
                 QuickstartScreen(

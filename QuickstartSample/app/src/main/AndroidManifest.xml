@@ -6,6 +6,10 @@
          it to detect steps. The SDK adds its other permissions through manifest merging. -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
 
+    <!-- On Android 13+ the recording notification is visible only if the app has the
+         POST_NOTIFICATIONS runtime permission. This minimal sample does not request it, so the
+         recording runs without a visible notification there. A real app should request it. -->
+
     <!-- Health data must not leave the device in a backup. allowBackup="false" turns backups off
          below Android 12; dataExtractionRules also excludes device-to-device transfers on 12+. -->
     <application
