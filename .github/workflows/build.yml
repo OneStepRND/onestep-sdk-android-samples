@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sample: [ActiveMesurementSample, BackgroundMonitoringSample, UiKitSample]
+        sample: [QuickstartSample, ActiveMesurementSample, BackgroundMonitoringSample, UiKitSample]
     defaults:
       run:
         working-directory: ${{ matrix.sample }}

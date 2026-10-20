@@ -18,11 +18,20 @@ Each sample is a standalone Gradle project with its own README (setup, keys, and
 
 | Sample | Demonstrates |
 |---|---|
+| [`QuickstartSample`](QuickstartSample/README.md) | **Start here:** the smallest complete integration — initialize, connect a user, record a 30-second walk, and show the walk score. Three Kotlin files. |
 | [`ActiveMesurementSample`](ActiveMesurementSample/README.md) | On-demand ("active") measurement — record a walk and get a walk score. |
 | [`BackgroundMonitoringSample`](BackgroundMonitoringSample/README.md) | Background activity monitoring, daily summaries, and foreground-service notification styles. |
 | [`UiKitSample`](UiKitSample/README.md) | Drop-in OneStep **UIKit** screens (recording flow, summary, carelog, permission flow). |
 
-All three follow the same setup pattern: credentials live in a gitignored `local.properties` and are exposed via `BuildConfig` (see each sample's README), so no keys are committed.
+All four follow the same setup pattern: credentials live in a gitignored `local.properties` and are exposed via `BuildConfig` (see each sample's README), so no keys are committed.
+
+## Quick start
+
+1. Open [`QuickstartSample`](QuickstartSample/README.md).
+2. Copy `local.properties.example` to `local.properties` and fill in your keys.
+3. Open the `QuickstartSample` folder in Android Studio and run it on a physical device.
+
+Its README shows the whole integration in one page. Move to the other samples for more features.
 
 ## Quick start
 
@@ -61,8 +70,8 @@ The OneStep SDK is currently available exclusively to our customers. We provide 
 | Compose BOM | 2026.03.00 |
 | OneStep SDK (core / uikit) | 2.3.0 |
 
-All three samples use the same toolchain. Each sample has its own `gradle/libs.versions.toml`, so
-bump versions in all three together. The samples use AGP 9 defaults: built-in Kotlin (no
+All four samples use the same toolchain. Each sample has its own `gradle/libs.versions.toml`, so
+bump versions in all four together. The samples use AGP 9 defaults: built-in Kotlin (no
 `org.jetbrains.kotlin.android` plugin, only the Compose compiler plugin) and the new DSL, with no
 compatibility opt-outs in `gradle.properties`. You can copy the build files into an AGP 9 project
 as-is.
