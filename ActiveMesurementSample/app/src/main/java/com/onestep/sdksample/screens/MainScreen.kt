@@ -13,6 +13,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 
+/** Owns the permission state, which needs an Activity, and renders [MainScreenContent]. */
 @Composable
 @OptIn(ExperimentalPermissionsApi::class)
 fun MainScreen(
@@ -26,6 +27,27 @@ fun MainScreen(
         permission = Manifest.permission.ACTIVITY_RECOGNITION
     )
 
+    MainScreenContent(
+        isConnecting = isConnecting,
+        isIdentified = isIdentified,
+        sessionLostMessage = sessionLostMessage,
+        hasActivityRecognitionPermission = activityRecognitionPermissionState.status.isGranted,
+        onRequestPermission = activityRecognitionPermissionState::launchPermissionRequest,
+        connect = connect,
+        disconnect = disconnect,
+    )
+}
+
+@Composable
+private fun MainScreenContent(
+    isConnecting: Boolean,
+    isIdentified: Boolean,
+    sessionLostMessage: String?,
+    hasActivityRecognitionPermission: Boolean,
+    onRequestPermission: () -> Unit,
+    connect: () -> Unit,
+    disconnect: () -> Unit,
+) {
     when {
         isConnecting -> {
             Box(Modifier.fillMaxSize()) {
@@ -39,10 +61,8 @@ fun MainScreen(
         }
 
         // OneStep recorder requires Activity Recognition permission since Android 14.0
-        !activityRecognitionPermissionState.status.isGranted && isOverAndroid34 -> {
-            NoActivityRecognitionPermission {
-                activityRecognitionPermissionState.launchPermissionRequest()
-            }
+        !hasActivityRecognitionPermission && isOverAndroid34 -> {
+            NoActivityRecognitionPermission { onRequestPermission() }
         }
 
         else -> WalkRecordScreen { disconnect() }
@@ -54,10 +74,12 @@ val isOverAndroid34 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_C
 @Preview(showBackground = true)
 @Composable
 private fun MainScreenNotIdentifiedPreview() {
-    MainScreen(
+    MainScreenContent(
         isConnecting = false,
         isIdentified = false,
         sessionLostMessage = null,
+        hasActivityRecognitionPermission = true,
+        onRequestPermission = {},
         connect = {},
         disconnect = {},
     )
@@ -66,10 +88,12 @@ private fun MainScreenNotIdentifiedPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun MainScreenConnectingPreview() {
-    MainScreen(
+    MainScreenContent(
         isConnecting = true,
         isIdentified = false,
         sessionLostMessage = null,
+        hasActivityRecognitionPermission = true,
+        onRequestPermission = {},
         connect = {},
         disconnect = {},
     )
