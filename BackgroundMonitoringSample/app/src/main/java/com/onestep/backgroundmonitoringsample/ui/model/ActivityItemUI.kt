@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -85,5 +86,18 @@ fun AnimatedIcon(expanded: Boolean) {
             .padding(start = 8.dp)
             .rotate(rotation),
         tint = iconColor,
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ActivityItemUIPreview() {
+    ActivityItemUI(
+        activityItem = ActivityItem(
+            uuid = "1",
+            title = "2026-06-22 - 5,231 steps",
+            startTime = "2026-06-22",
+            details = mapOf("Date" to "2026-06-22", "Total Steps" to "5231"),
+        ),
     )
 }

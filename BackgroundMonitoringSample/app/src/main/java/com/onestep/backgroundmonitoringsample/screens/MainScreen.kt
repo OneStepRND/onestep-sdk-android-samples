@@ -6,28 +6,35 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.onestep.backgroundmonitoringsample.ui.model.ActivityItem
+import com.onestep.backgroundmonitoringsample.ui.model.MonitoringUiState
+import com.onestep.backgroundmonitoringsample.ui.model.NotificationStyle
 import com.onestep.backgroundmonitoringsample.ui.model.ScreenState
-import com.onestep.backgroundmonitoringsample.viewmodels.MainViewModel
 
 
 @Composable
 @OptIn(ExperimentalPermissionsApi::class)
-fun MainScreen(viewModel: MainViewModel) {
-    val monitoringState = viewModel.monitoringUiState.collectAsState()
-    val notificationStyle = viewModel.notificationStyle.collectAsState()
-    val notificationDismissible = viewModel.notificationDismissible.collectAsState()
-    val screenState = viewModel.screenState
-
+fun MainScreen(
+    screenState: ScreenState,
+    monitoringState: MonitoringUiState,
+    notificationStyle: NotificationStyle,
+    notificationDismissible: Boolean,
+    records: List<ActivityItem>,
+    onScreenStateChange: (ScreenState) -> Unit,
+    onOptIn: () -> Unit,
+    onOptOut: () -> Unit,
+    onSelectNotificationStyle: (NotificationStyle) -> Unit,
+    onNotificationDismissibleChange: (Boolean) -> Unit,
+    onLoadRecords: () -> Unit,
+) {
     // Permission for activity recognition is required to use the SDK
     val activityRecognitionPermissionState = rememberMultiplePermissionsState(
         permissions = listOf(Manifest.permission.ACTIVITY_RECOGNITION, Manifest.permission.POST_NOTIFICATIONS)
@@ -43,13 +50,13 @@ fun MainScreen(viewModel: MainViewModel) {
     LaunchedEffect(activityRecognitionPermissionState.permissions.first { it.permission == Manifest.permission.ACTIVITY_RECOGNITION }.status) {
         // Opt in to monitoring once permissions are granted
         if (activityRecognitionPermissionState.permissions.first { it.permission == Manifest.permission.ACTIVITY_RECOGNITION }.status.isGranted) {
-            viewModel.optInToMonitoring()
+            onOptIn()
         }
     }
 
     BackHandler {
         if (screenState is ScreenState.Records) {
-            viewModel.setState(ScreenState.Initialized)
+            onScreenStateChange(ScreenState.Initialized)
         }
     }
 
@@ -63,39 +70,63 @@ fun MainScreen(viewModel: MainViewModel) {
                 }
             }
 
-            is ScreenState.Error -> {
-                Box(Modifier.fillMaxSize()) {
-                    Text(
-                        modifier = Modifier.align(Alignment.Center),
-                        text = state.message,
-                        color = androidx.compose.ui.graphics.Color.Red,
-                        fontSize = 20.sp
-                    )
-                }
-            }
+            is ScreenState.Error -> SetupError(message = state.message)
 
             is ScreenState.Initialized -> {
                 MonitoringScreen(
-                    monitoringState = monitoringState.value,
-                    notificationStyle = notificationStyle.value,
-                    onOptIn = { viewModel.optInToMonitoring() },
-                    onOptOut = { viewModel.optOutOfMonitoring() },
-                    onSelectNotificationStyle = { style ->
-                        viewModel.setNotificationStyle(style)
-                    },
-                    notificationDismissible = notificationDismissible.value,
-                    onNotificationDismissibleChange = viewModel::setNotificationDismissible,
+                    monitoringState = monitoringState,
+                    notificationStyle = notificationStyle,
+                    onOptIn = onOptIn,
+                    onOptOut = onOptOut,
+                    onSelectNotificationStyle = onSelectNotificationStyle,
+                    notificationDismissible = notificationDismissible,
+                    onNotificationDismissibleChange = onNotificationDismissibleChange,
                     onShowRecords = {
-                        viewModel.setState(ScreenState.Records)
+                        onScreenStateChange(ScreenState.Records)
                     },
                 )
             }
 
             is ScreenState.Records -> {
-                val records = viewModel.records.collectAsState()
-                LaunchedEffect(Unit) { viewModel.loadRecords() }
-                RecordsListScreen(items = records.value)
+                LaunchedEffect(Unit) { onLoadRecords() }
+                RecordsListScreen(items = records)
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MainScreenPreview() {
+    MainScreen(
+        screenState = ScreenState.Initialized,
+        monitoringState = MonitoringUiState(),
+        notificationStyle = NotificationStyle.DEFAULT,
+        notificationDismissible = false,
+        records = emptyList(),
+        onScreenStateChange = {},
+        onOptIn = {},
+        onOptOut = {},
+        onSelectNotificationStyle = {},
+        onNotificationDismissibleChange = {},
+        onLoadRecords = {},
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MainScreenErrorPreview() {
+    MainScreen(
+        screenState = ScreenState.Error("SDK session lost: sample error"),
+        monitoringState = MonitoringUiState(),
+        notificationStyle = NotificationStyle.DEFAULT,
+        notificationDismissible = false,
+        records = emptyList(),
+        onScreenStateChange = {},
+        onOptIn = {},
+        onOptOut = {},
+        onSelectNotificationStyle = {},
+        onNotificationDismissibleChange = {},
+        onLoadRecords = {},
+    )
 }

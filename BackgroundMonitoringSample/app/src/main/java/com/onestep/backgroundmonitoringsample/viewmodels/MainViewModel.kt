@@ -25,8 +25,8 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
-    // The SDK is initialised in BgMonitoringSampleApplication.onCreate(), so by the
-    // time this ViewModel is constructed the process-singleton handle is available.
+    // The SDK is initialised in BgMonitoringSampleApplication.onCreate(). MainActivity creates
+    // this ViewModel only after that succeeded, so the process-singleton handle is available.
     private val oneStep: OneStep = OneStep.getInstance().getOr(null)
         ?: error("OneStep SDK not initialized")
 
