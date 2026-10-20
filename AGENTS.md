@@ -15,7 +15,7 @@ or build it from its own folder. There is no root Gradle build.
 | `BackgroundMonitoringSample/` | Core SDK: background monitoring, daily summaries, notifications |
 | `UiKitSample/` | UIKit: prebuilt recording flows, summary, carelog, permissions, theming |
 
-Each sample's README has a "Where to look" table that maps features to files.
+Each sample's README maps its features to the files that implement them.
 
 ## Rules
 

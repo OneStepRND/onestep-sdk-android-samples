@@ -145,7 +145,7 @@ oneStepSdk.clearPatient()
 
 | Symptom | Cause and fix |
 |---|---|
-| The app says the SDK cannot connect, or `setPatient` fails right away | `local.properties` is missing, or `onestep.clientToken` / `onestep.customerPatientId` is blank. Copy `local.properties.example`, fill it in, then rebuild. |
+| `setPatient` fails right away (see Logcat), or the sample shows a setup screen | `local.properties` is missing, or `onestep.clientToken` / `onestep.customerPatientId` is blank. Copy `local.properties.example`, fill it in, then rebuild. |
 | `setPatient` fails with HTTP 403 `invalid hmac_digest` | `onestep.identityVerification` does not match `onestep.customerPatientId`. Recompute the digest for that exact id, or leave it blank while testing. |
 | A recording does not start | On Android 10+ the user must grant Physical activity (`ACTIVITY_RECOGNITION`). Since SDK 2.3.0, `start()` returns `MissingPermission` instead of throwing. |
 | No walk score on the emulator | The emulator has no motion sensors. Use a physical device. |
