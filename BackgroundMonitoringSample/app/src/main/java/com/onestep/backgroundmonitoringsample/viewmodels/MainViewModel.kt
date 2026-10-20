@@ -12,6 +12,7 @@ import co.onestep.android.core.getOr
 import co.onestep.android.core.monitoring.OSTSortOrder
 import co.onestep.android.core.monitoring.getMonitoring
 import co.onestep.android.core.onSuccess
+import com.onestep.backgroundmonitoringsample.BgMonitoringSampleApplication
 import com.onestep.backgroundmonitoringsample.notifications.MonitoringNotifications
 import com.onestep.backgroundmonitoringsample.ui.model.ActivityItem
 import com.onestep.backgroundmonitoringsample.ui.model.MonitoringUiState
@@ -21,6 +22,7 @@ import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -106,20 +108,25 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun start() {
+        val connectionError = getApplication<BgMonitoringSampleApplication>().connectionError
         viewModelScope.launch {
-            oneStep.identificationState.collect { state ->
-                isIdentified = state is OSTIdentificationState.Identified
-                when (state) {
-                    is OSTIdentificationState.Identified -> {
-                        collectMonitoringState()
-                        screenState = ScreenState.Initialized
+            // Unidentified alone means "still connecting"; with a connection error it means the
+            // automatic setPatient() failed, so show the error instead of loading forever.
+            combine(oneStep.identificationState, connectionError) { state, error -> state to error }
+                .distinctUntilChanged()
+                .collect { (state, error) ->
+                    isIdentified = state is OSTIdentificationState.Identified
+                    when (state) {
+                        is OSTIdentificationState.Identified -> {
+                            collectMonitoringState()
+                            screenState = ScreenState.Initialized
+                        }
+                        is OSTIdentificationState.Lost ->
+                            screenState = ScreenState.Error("Session lost: ${state.cause.message}")
+                        OSTIdentificationState.Unidentified ->
+                            screenState = error?.let { ScreenState.Error(it) } ?: ScreenState.Loading
                     }
-                    is OSTIdentificationState.Lost ->
-                        screenState = ScreenState.Error("Session lost: ${state.cause.message}")
-                    OSTIdentificationState.Unidentified ->
-                        screenState = ScreenState.Loading
                 }
-            }
         }
     }
 
