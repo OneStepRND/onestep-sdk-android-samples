@@ -45,7 +45,7 @@ class BgMonitoringSampleApplication : Application() {
         OneStep.initialize(
             application = this,
             onAuthLost = { error ->
-                Log.w(TAG, "Auth lost: ${error.type}")
+                Log.w(TAG, "Auth lost: ${error.type.name}")
             },
         ).onSuccess { oneStep ->
             oneStepSdk = oneStep
@@ -61,7 +61,7 @@ class BgMonitoringSampleApplication : Application() {
             }
             applicationScope.launch { identifyAndStartMonitoring(oneStep) }
         }.onError { error ->
-            Log.e(TAG, "SDK initialize failed: ${error.cause.type}")
+            Log.e(TAG, "SDK initialize failed: ${error.cause.type.name}")
         }
     }
 
