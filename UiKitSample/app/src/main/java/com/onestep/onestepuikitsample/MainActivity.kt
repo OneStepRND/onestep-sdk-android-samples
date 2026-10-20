@@ -149,6 +149,8 @@ class MainActivity : AppCompatActivity() {
         viewModel.isConnecting = true
         lifecycleScope.launch {
             (application as UiKitSampleApplication).connectUser()
+            // Also clears the spinner when setPatient() failed and the state stayed Unidentified.
+            viewModel.isConnecting = false
         }
     }
 }
