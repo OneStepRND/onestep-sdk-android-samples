@@ -20,24 +20,25 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.onestep.android.uikit.OSTTheme
 import com.onestep.onestepuikitsample.ui.theme.font.getName
 
 @Composable
 fun FontDropDown(
-    font: MutableState<FontFamily>,
-    expanded: MutableState<Boolean>,
+    font: FontFamily,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
     fontFamilies: List<FontFamily>,
     onFontChange: (FontFamily) -> Unit,
 ) {
-    val primary = OSTTheme.colorScheme.collectAsState().value.primary
+    val primary = OSTTheme.colorScheme.collectAsStateWithLifecycle().value.primary
 
     Column(
         modifier = Modifier
@@ -50,7 +51,7 @@ fun FontDropDown(
                 containerColor = primary,
             ),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-            onClick = { expanded.value = true }
+            onClick = { onExpandedChange(true) }
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -63,16 +64,16 @@ fun FontDropDown(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = font.value.getName().orEmpty(),
+                    text = font.getName().orEmpty(),
                     fontWeight = FontWeight.Bold,
-                    fontFamily = font.value
+                    fontFamily = font
                 )
             }
         }
 
         DropdownMenu(
-            expanded = expanded.value,
-            onDismissRequest = { expanded.value = false },
+            expanded = expanded,
+            onDismissRequest = { onExpandedChange(false) },
             modifier = Modifier.width(400.dp).padding(horizontal = 26.dp),
         ) {
             fontFamilies.forEach { option ->
@@ -86,11 +87,23 @@ fun FontDropDown(
                         )
                     },
                     onClick = {
-                        expanded.value = false
+                        onExpandedChange(false)
                         onFontChange(option)
                     },
                 )
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FontDropDownPreview() {
+    FontDropDown(
+        font = FontFamily.Default,
+        expanded = false,
+        onExpandedChange = {},
+        fontFamilies = listOf(FontFamily.Default),
+        onFontChange = {},
+    )
 }

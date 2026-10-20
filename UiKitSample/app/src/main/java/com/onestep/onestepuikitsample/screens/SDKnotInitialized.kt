@@ -6,22 +6,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import co.onestep.android.core.OSTIdentificationState
-import com.onestep.onestepuikitsample.MainViewModel
-import kotlinx.coroutines.launch
 
 
+/**
+ * @param sessionLostMessage shown under the button when the SDK reported a lost session.
+ */
 @Composable
 fun SDKnotInitialized(
-    viewModel: MainViewModel,
-    onInitialized: suspend () -> Unit = {},
+    sessionLostMessage: String?,
+    onInitialized: () -> Unit = {},
 ) {
-    val scope = rememberCoroutineScope()
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -36,19 +35,14 @@ fun SDKnotInitialized(
         )
         Button(
             modifier = Modifier.padding(16.dp),
-            onClick = {
-                scope.launch {
-                    onInitialized()
-                }
-            }
+            onClick = onInitialized
         ) {
             Text("Identify user")
         }
 
-        val state = viewModel.sdkState
-        if (state is OSTIdentificationState.Lost) {
+        if (sessionLostMessage != null) {
             Text(
-                text = "Session lost: ${state.cause.message}",
+                text = sessionLostMessage,
                 modifier = Modifier
                     .padding(16.dp)
                     .align(Alignment.CenterHorizontally),
@@ -58,4 +52,10 @@ fun SDKnotInitialized(
         }
 
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SDKnotInitializedPreview() {
+    SDKnotInitialized(sessionLostMessage = "Session lost: sample error")
 }
