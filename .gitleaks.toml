@@ -1,0 +1,33 @@
+# Secret scanning for this public repo. Used by .github/workflows/secret-scan.yml and the optional
+# pre-commit hook in .githooks/. Credentials belong only in each sample's gitignored
+# local.properties; see local.properties.example.
+title = "OneStep sample apps"
+
+[extend]
+useDefault = true
+
+# A OneStep credential written as a string literal in code, instead of read from BuildConfig.
+# Placeholders that start with "<" (as in the READMEs) are allowed.
+[[rules]]
+id = "onestep-credential-literal"
+description = "OneStep credential hardcoded as a string literal"
+regex = '''(?i)\b(apiKey|clientToken|identityVerification|customerPatientId)\s*[=:]\s*"([^"<$\s][^"]{7,})"'''
+secretGroup = 2
+keywords = ["apikey", "clienttoken", "identityverification", "customerpatientid"]
+
+# Documentation placeholders such as "your-client-token" or "api_key_789" are not credentials.
+[[rules.allowlists]]
+regexTarget = "secret"
+regexes = [
+  '''(?i)^(your|example|sample|placeholder|dummy|fake)[-_]''',
+  '''(?i)^api_key_\d{1,4}$''',
+  '''(?i)^server_generated_hmac$''',
+]
+
+# A real value in a properties file (for example, local.properties copied under another name).
+[[rules]]
+id = "onestep-credential-property"
+description = "OneStep credential value in a properties file"
+regex = '''(?i)\bonestep\.(clientToken|identityVerification|customerPatientId)\s*=\s*([^<\s#][^\s#]{7,})'''
+secretGroup = 2
+keywords = ["onestep."]
