@@ -46,7 +46,7 @@ class SDKSampleApplication : Application() {
             EventsCollector.startCollecting(oneStep, applicationScope)
             configureRecordingNotification(oneStep)
         }.onError { error ->
-            Log.e(TAG, "SDK initialize failed: ${error.cause.message}")
+            Log.e(TAG, "SDK initialize failed: ${error.cause.type}")
         }
     }
 
@@ -70,7 +70,7 @@ class SDKSampleApplication : Application() {
                 text = { getString(R.string.recording_notification_text) },
             )
         }.onError { error ->
-            Log.w(TAG, "setCustomRecordingNotification failed: ${error.cause.message}")
+            Log.w(TAG, "setCustomRecordingNotification failed: ${error.cause.type}")
         }
     }
 
@@ -96,7 +96,7 @@ class SDKSampleApplication : Application() {
             Log.d(TAG, "SDK identified successfully")
             configureRecordingNotification(oneStep)
         }.onError { error ->
-            Log.e(TAG, "SDK setPatient failed: ${error.cause.message}")
+            Log.e(TAG, "SDK setPatient failed: ${error.cause.type}")
         }.isSuccess
     }
 }

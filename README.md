@@ -75,12 +75,13 @@ implementation("co.onestep.android:core:2.3.0")
 implementation("co.onestep.android:uikit:2.3.0")
 ```
 
-`OneStep.initialize` returns an `OSTResult<OneStep>` — the success value is the SDK instance you use for everything else. Hold on to it (e.g. on your `Application`) and bind a user via `setPatient`, which is suspend and returns an `OSTResult`.
+`OneStep.initialize` returns an `OSTResult<OneStep>` — the success value is the SDK instance you use for everything else. Hold on to it (e.g. on your `Application`) and bind a user via `setPatient`, which is suspend and returns an `OSTResult`. `initialize` can fail (for example `NoGyroscope` on a device without a gyroscope), so keep the instance nullable and guard every use; a `lateinit` property would crash on such a device.
 
 ```kotlin
 class MyApplication : Application() {
 
-    lateinit var oneStepSdk: OneStep
+    // Null when initialize failed. Never lateinit: that crashes on the first use.
+    var oneStepSdk: OneStep? = null
         private set
 
     override fun onCreate() {
@@ -89,17 +90,18 @@ class MyApplication : Application() {
             application = this,
             onAuthLost = { error ->
                 // Called when the session expires (401/403)
-                Log.w("OneStep", "Auth lost: ${error.message}")
+                Log.w("OneStep", "Auth lost: ${error.type}")
             },
         ).onSuccess { oneStep ->
             oneStepSdk = oneStep
         }.onError { error ->
-            Log.e("OneStep", "init failed: ${error.cause.message}")
+            Log.e("OneStep", "init failed: ${error.cause.type}")
         }
     }
 
     suspend fun connectUser() {
-        oneStepSdk.setPatient(
+        val oneStep = oneStepSdk ?: return
+        oneStep.setPatient(
             apiKey = "<YOUR-CLIENT-TOKEN>",
             customerPatientId = "<YOUR-USER-DISTINCT-ID>",
             // NOT the secret — the hex HMAC_SHA256(secret, customerPatientId) digest, computed
@@ -112,20 +114,26 @@ class MyApplication : Application() {
             },
         ).onError { error ->
             // error.cause.type is OSTError.Type (InvalidClientToken, NetworkError, …)
-            Log.e("OneStep", "setPatient failed: ${error.cause.type} - ${error.cause.message}")
+            Log.e("OneStep", "setPatient failed: ${error.cause.type}")
         }
     }
 }
 ```
+
+Log and show only `error.cause.type`, never `error.cause.message`: the message can carry the
+server's response body. The SDK follows the same rule in its own logs.
 
 ### Observe SDK state
 
 `identificationState` is the single source of truth for whether a patient is bound.
 
 ```kotlin
+val oneStep = (application as MyApplication).oneStepSdk ?: return // initialize failed
 lifecycleScope.launch {
-    oneStepSdk.identificationState.collect { state ->
+    oneStep.identificationState.collect { state ->
         when (state) {
+            // Also the flow's first value, even for a patient restored from a previous run, so
+            // collect the flow rather than reading .value once right after initialize().
             OSTIdentificationState.Unidentified -> { /* SDK is initialized, no user bound */ }
             is OSTIdentificationState.Identified -> { /* state.patientId is identified */ }
             is OSTIdentificationState.Lost -> { /* state.cause describes the loss (401/403, expired, …) */ }
@@ -137,7 +145,7 @@ lifecycleScope.launch {
 ### Logout
 
 ```kotlin
-oneStepSdk.clearPatient()
+oneStepSdk?.clearPatient()
 ```
 
 `clearPatient()` clears credentials, stops monitoring, and transitions `identificationState` back to `Unidentified`. SDK initialization is preserved — you don't need to call `initialize()` again before the next `setPatient()`.
