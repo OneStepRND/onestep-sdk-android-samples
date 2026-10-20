@@ -40,13 +40,13 @@ class UiKitSampleApplication : Application() {
         OneStep.initialize(
             application = this,
             onAuthLost = { error ->
-                Log.w(TAG, "Auth lost: ${error.message}")
+                Log.w(TAG, "Auth lost: ${error.type.name}")
             },
         ).onSuccess { oneStep ->
             oneStepSdk = oneStep
             EventsCollector.startCollecting(oneStep, applicationScope)
         }.onError { error ->
-            Log.e(TAG, "SDK initialize failed: ${error.cause.message}")
+            Log.e(TAG, "SDK initialize failed: ${error.cause.type.name}")
         }
     }
 
@@ -66,7 +66,7 @@ class UiKitSampleApplication : Application() {
                 withSex(OSTUserAttributes.Sex.FEMALE)
             },
         ).onError { error ->
-            Log.e(TAG, "Identify failed: ${error.cause.message}")
+            Log.e(TAG, "Identify failed: ${error.cause.type.name}")
         }.isSuccess
     }
 }
