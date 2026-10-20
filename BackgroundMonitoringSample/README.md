@@ -2,7 +2,7 @@
 
 ## Versioning
 
-![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
+![Commercial License](https://img.shields.io/badge/license-Commercial-green.svg)
 ![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)
 ![SDK](https://img.shields.io/badge/sdk-2.3.0-red.svg)
 
@@ -15,9 +15,6 @@ BackgroundMonitoringSample is an app demonstrating the OneStep core SDK collecti
 That guide covers SDK setup, identity verification, the monitoring lifecycle (`enable` vs
 `optIn`/`optOut`), notification configuration, daily summaries, and the events stream. This sample
 links back to it from the relevant code.
-
-> `migration-guide-ios-developer.md` in this folder is a v1→v2 API reference aimed at **iOS**
-> developers porting from the Android SDK. Android consumers can ignore it.
 
 ## Features
 
@@ -214,4 +211,4 @@ that id. If the digest is wrong, the SDK fails to connect with HTTP 403 `invalid
 
 ## Support
 
-For support, additional information, or to report issues, contact `ziv@onestep.co`.
+For support, additional information, or to report issues, contact `shahar@onestep.co`.

@@ -3,6 +3,7 @@
 ## Versioning
 
 ![API](https://img.shields.io/badge/API-26%2B-brightgreen.svg)
+![Commercial License](https://img.shields.io/badge/license-Commercial-green.svg)
 ![Core](https://img.shields.io/badge/core-2.3.0-red.svg)
 ![UiKit](https://img.shields.io/badge/uikit-2.3.0-blue.svg)
 
@@ -164,3 +165,12 @@ New APIs since 2.0, and where this repo shows them:
 UiKitSample now also launches the 6-minute walk, 2-minute walk and Stairs flows, which exist since
 2.0. For the full list, see the SDK changelog and the
 [documentation](https://glorious-caboc-cd3.notion.site/onestep-collect-for-android).
+
+## Support
+
+For SDK access, credentials, support, or to report an issue, contact `shahar@onestep.co`.
+
+## License
+
+The OneStep SDK and these sample apps are commercial software, licensed to OneStep customers under
+their agreement with OneStep.
