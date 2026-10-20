@@ -39,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.onestep.android.core.OSTParamName
 import com.onestep.sdksample.viewmodels.RecorderUiState
+import com.onestep.sdksample.viewmodels.RecordingProgress
 import com.onestep.sdksample.viewmodels.RecorderViewModel
 
 @Composable
@@ -50,6 +51,26 @@ fun WalkRecordScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
 
+    WalkRecordContent(
+        state = state,
+        progress = progress,
+        onStartRecording = viewModel::startRecording,
+        onStopRecording = viewModel::stopRecording,
+        disconnect = disconnect,
+        modifier = modifier,
+    )
+}
+
+/** Stateless walk-recording UI. [WalkRecordScreen] feeds it from [RecorderViewModel]. */
+@Composable
+private fun WalkRecordContent(
+    state: RecorderUiState,
+    progress: RecordingProgress?,
+    onStartRecording: () -> Unit,
+    onStopRecording: () -> Unit,
+    disconnect: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -66,14 +87,14 @@ fun WalkRecordScreen(
                 text = "Start Recording",
                 icon = Icons.Default.PlayArrow,
                 enabled = state.canStart,
-                onClick = viewModel::startRecording,
+                onClick = onStartRecording,
             )
             MainButton(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 text = "Stop Recording",
                 icon = Icons.Default.MailOutline,
                 enabled = state is RecorderUiState.Recording,
-                onClick = viewModel::stopRecording,
+                onClick = onStopRecording,
             )
 
             AnimatedContent(
@@ -166,6 +187,30 @@ private fun Long.toClock(): String = "%d:%02d".format(this / 60, this % 60)
 
 @Preview(showBackground = true)
 @Composable
+private fun WalkRecordContentPreview() {
+    WalkRecordContent(
+        state = RecorderUiState.Recording,
+        progress = RecordingProgress(elapsedSeconds = 23, totalSeconds = 60, steps = 31),
+        onStartRecording = {},
+        onStopRecording = {},
+        disconnect = {},
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WalkRecordContentFailedPreview() {
+    WalkRecordContent(
+        state = RecorderUiState.Failed("Could not start: sample error"),
+        progress = null,
+        onStartRecording = {},
+        onStopRecording = {},
+        disconnect = {},
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
 private fun RecordingProgressTextPreview() {
     RecordingProgressText(elapsedSeconds = 23, totalSeconds = 60, steps = 31)
 }
@@ -196,6 +241,12 @@ private fun MainButton(
             Text(text = text, fontSize = 20.sp, color = Color(0xFF4678B4))
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MainButtonPreview() {
+    MainButton(text = "Start Recording", icon = Icons.Default.PlayArrow, onClick = {})
 }
 
 private val RecorderUiState.label: String
