@@ -27,16 +27,11 @@ All four follow the same setup pattern: credentials live in a gitignored `local.
 
 ## Quick start
 
-1. Open [`QuickstartSample`](QuickstartSample/README.md).
-2. Copy `local.properties.example` to `local.properties` and fill in your keys.
-3. Open the `QuickstartSample` folder in Android Studio and run it on a physical device.
+Start with [`QuickstartSample`](QuickstartSample/README.md). Its README shows the whole
+integration on one page. Move to the other samples for more features.
 
-Its README shows the whole integration in one page. Move to the other samples for more features.
-
-## Quick start
-
-1. Clone the repo and open one sample folder (for example `ActiveMesurementSample/`) in Android
-   Studio. Each sample is its own Gradle project.
+1. Clone the repo and open one sample folder (`QuickstartSample/` to start) in Android Studio.
+   Each sample is its own Gradle project.
 2. Copy the credentials template and fill in your values:
 
    ```bash
@@ -207,7 +202,7 @@ UiKitSample now also launches the 6-minute walk, 2-minute walk and Stairs flows,
 
 | Path | What it is |
 |---|---|
-| `ActiveMesurementSample/`, `BackgroundMonitoringSample/`, `UiKitSample/` | Standalone sample projects, each with a README and `local.properties.example` |
+| `QuickstartSample/`, `ActiveMesurementSample/`, `BackgroundMonitoringSample/`, `UiKitSample/` | Standalone sample projects, each with a README and `local.properties.example` |
 | `.github/workflows/` | CI: builds every sample, and scans every change for secrets |
 | `renovate.json` | Weekly dependency PRs; OneStep SDK releases are bumped in all samples at once |
 | `AGENTS.md` | Instructions for AI coding assistants |

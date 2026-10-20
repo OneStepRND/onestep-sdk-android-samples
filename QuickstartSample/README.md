@@ -45,35 +45,67 @@ oneStep = OneStep.initialize(
 ).getOr(null) // null when initialization fails, for example on a device without a gyroscope
 ```
 
-Connect a user, record, and analyze
-([`QuickstartViewModel.kt`](app/src/main/java/com/onestep/quickstart/QuickstartViewModel.kt)):
+Connect a user, then record and analyze. These are excerpts of `connect()` and
+`recordAndAnalyze()` in
+[`QuickstartViewModel.kt`](app/src/main/java/com/onestep/quickstart/QuickstartViewModel.kt), with
+the constants inlined and the Busy state updates left out. The file wraps `error.cause.type.name` in a small `typeName` helper.
 
 ```kotlin
 // 1. Bind the user. Credentials come from local.properties via BuildConfig.
-oneStep.setPatient(
+sdk.setPatient(
     apiKey = BuildConfig.CLIENT_TOKEN,
     customerPatientId = BuildConfig.CUSTOMER_PATIENT_ID,
     identityVerification = BuildConfig.IDENTITY_VERIFICATION.ifBlank { null },
-)
-
-// 2. Record. Request ACTIVITY_RECOGNITION first (see MainActivity.kt).
-val motionLab = oneStep.getMotionLab().getOr { return it.describe() }
-motionLab.reset()
-motionLab.prepareForRecording(OSTActivityType.WALK) // while the app is in the foreground
-motionLab.start(OSTActivityType.WALK, 30_000).getOr { error ->
-    motionLab.reset() // a refused start records nothing; release the service
-    return "Could not start: ${error.describe()}"
+).getOr { error ->
+    _state.value = QuickstartUiState.Disconnected("Could not connect (${error.cause.type.name}).")
+    return@launch
 }
-withTimeoutOrNull(60_000) { motionLab.recorderState.first { it == OSTRecorderState.DONE } }
-
-// 3. Analyze and read the result.
-val measurement = motionLab.analyze(timeout = 60_000).getOr { return it.describe() }
-val walkScore = measurement.params[OSTParamName.WALKING_WALK_SCORE]
-val steps = measurement.metadata.steps
 ```
 
-Every result is an `OSTResult`: check it. Since SDK 2.3.0, `start()` returns an error (for example
-`MissingPermission`) instead of throwing.
+```kotlin
+// 2. Record. Request ACTIVITY_RECOGNITION first (see MainActivity.kt).
+val motionLab = sdk.getMotionLab().getOr { return "Recording unavailable (${it.cause.type.name})." }
+motionLab.reset() // clear the previous recording
+// Starts the recording service. Call it while the app is in the foreground: it returns
+// Success(false), and starts no service, when the app is already in the background.
+motionLab.prepareForRecording(OSTActivityType.WALK)
+motionLab.start(OSTActivityType.WALK, 30_000L).getOr { error ->
+    motionLab.reset() // a refused start records nothing; release the service
+    return "Could not start the recording (${error.cause.type.name})."
+}
+withTimeoutOrNull(60_000L) {
+    motionLab.recorderState.first { it == OSTRecorderState.DONE }
+} ?: run {
+    motionLab.stop() // the recorder may still be running
+    motionLab.reset()
+    return "The recording did not finish in time."
+}
+```
+
+```kotlin
+// 3. Analyze and read the result.
+val measurement = motionLab.analyze(timeout = 60_000L)
+    .getOr { return "Analysis failed (${it.cause.type.name})." }
+return when (measurement.resultState) {
+    OSTResultState.FULL_ANALYSIS -> measurement.summary()
+    OSTResultState.PARTIAL_ANALYSIS -> measurement.summary() + "\n(partial analysis)"
+    OSTResultState.EMPTY_ANALYSIS -> "Empty analysis: the walk had too few steps to score."
+    null -> "Analysis not available yet (timeout or network). The SDK syncs it later."
+}
+
+// summary() reads the walk score and the step count:
+//   params[OSTParamName.WALKING_WALK_SCORE] and metadata.steps
+```
+
+Every call returns an `OSTResult`: check it. Show only `error.cause.type`, never
+`error.cause.message`, because the message can contain the server's response body.
+
+Permissions:
+
+- `ACTIVITY_RECOGNITION`: without it, `start()` fails with `MissingPermission` on Android 14+.
+  On Android 10-13 the recording starts but counts no steps.
+- `POST_NOTIFICATIONS`: on Android 13+ the recording notification is visible only if the app has
+  this permission. This sample does not request it; a real app should.
 
 ## Next steps
 
