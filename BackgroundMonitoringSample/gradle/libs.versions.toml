@@ -9,7 +9,7 @@ lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
 composeBom = "2026.03.00"
 materialIconsCore = "1.7.8"
-oneStepSDK = "2.3.0"
+oneStepSDK = "2.4.0"
 androidxLifecycle = "2.8.7"
 accompanist = "0.36.0"
 
